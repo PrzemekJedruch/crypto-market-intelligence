@@ -37,11 +37,12 @@
 - [x] Define `get_open_interest()`
 - [x] Define `get_funding_rate()`
 - [x] Define `get_supported_symbols()`
+- [x] Standardize timestamps
 
 
 ### Next Tasks
 
-- [ ] Standardize timestamps
+
 - [ ] Standardize symbol handling
 - [ ] Standardize returned models
 
@@ -120,7 +121,7 @@ Create a common contract for exchange integrations.
 - [x] Define `get_open_interest()`
 - [x] Define `get_funding_rate()`
 - [x] Define `get_supported_symbols()`
-- [ ] Standardize timestamps
+- [x] Standardize timestamps
 - [ ] Standardize symbol handling
 - [ ] Standardize returned models
 

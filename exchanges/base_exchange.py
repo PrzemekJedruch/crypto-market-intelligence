@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from enums.exchange import Exchange
 from enums.market_type import MarketType
@@ -9,8 +9,10 @@ from models.funding_rate import FundingRate
 
 
 class BaseExchange:
-    """Base class for cryptocurrency exchange clients."""
+    """Base class for cryptocurrency exchange clients.
 
+    All timestamps passed to and returned by exchange clients must use UTC.
+    """
     def __init__(self, exchange: Exchange):
         """Initialize the exchange client."""
         self.exchange = exchange
@@ -62,4 +64,12 @@ class BaseExchange:
     ) -> list[str]:
         """Return symbols supported by the exchange for the given market type."""
         raise NotImplementedError
-    
+
+    @staticmethod
+    def _normalize_timestamp(timestamp: datetime) -> datetime:
+        """Return a timezone-aware datetime normalized to UTC."""
+        
+        if timestamp.tzinfo is None:
+            raise ValueError("Timestamp must be timezone-aware.")
+
+        return timestamp.astimezone(timezone.utc)
