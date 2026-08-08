@@ -5,7 +5,7 @@
 | Phase | Status | Progress |
 |---|---|---:|
 | 1. Core Data Models | ✅ DONE | 100% |
-| 2. Exchange Interface | 🟡 IN PROGRESS | 0% |
+| 2. Exchange Interface | 🟡 IN PROGRESS | 60% |
 | 3. Binance Integration | ⬜ TODO | 0% |
 | 4. Database Layer | ⬜ TODO | 0% |
 | 5. Historical Synchronization | ⬜ TODO | 0% |
@@ -30,27 +30,20 @@
 **Next Milestone:**  Define the BaseExchange contract.
 ### Completed Recently
 
-- [x] Add `BaseMarketData`
-- [x] Refactor market models to inherit from `BaseMarketData`
-- [x] Update `models/__init__.py`
-- [x] Update `enums/__init__.py`
-- [x] Review naming conventions
-- [x] Define code comment and docstring conventions
-- [x] Add basic tests for all market models
-- [x] Run the model test suite successfully
-- [x] Update `data_model.md`
-- [x] Update `architecture.md`
 - [x] Complete Phase 1 — Core Data Models
+- [x] Create `BaseExchange`
+- [x] Define `get_candles()`
+- [x] Define `get_trades()`
+- [x] Define `get_open_interest()`
+- [x] Define `get_funding_rate()`
+- [x] Define `get_supported_symbols()`
+
 
 ### Next Tasks
 
-- [ ] Create `BaseExchange`
-- [ ] Define `get_candles()`
-- [ ] Define `get_trades()`
-- [ ] Define `get_open_interest()`
-- [ ] Define `get_funding_rate()`
-- [ ] Define `get_supported_symbols()`
-- [ ] Standardize exchange method contracts
+- [ ] Standardize timestamps
+- [ ] Standardize symbol handling
+- [ ] Standardize returned models
 
 ## Status Legend
 
@@ -121,12 +114,12 @@ Create a common contract for exchange integrations.
 
 ### Tasks
 
-- [ ] Create `BaseExchange`
-- [ ] Define `get_candles()`
-- [ ] Define `get_trades()`
-- [ ] Define `get_open_interest()`
-- [ ] Define `get_funding_rate()`
-- [ ] Define `get_supported_symbols()`
+- [x] Create `BaseExchange`
+- [x] Define `get_candles()`
+- [x] Define `get_trades()`
+- [x] Define `get_open_interest()`
+- [x] Define `get_funding_rate()`
+- [x] Define `get_supported_symbols()`
 - [ ] Standardize timestamps
 - [ ] Standardize symbol handling
 - [ ] Standardize returned models
