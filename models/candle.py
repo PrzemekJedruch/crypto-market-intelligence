@@ -1,26 +1,12 @@
 from dataclasses import dataclass
-from datetime import datetime
 
-from enums.exchange import Exchange
-from enums.market_type import MarketType
+from models.base_market_data import BaseMarketData
 
 
 @dataclass
-class Candle:
-    # Exchange from which the candle data comes
-    exchange: Exchange
-
-    # Type of market, for example spot or perpetual
-    market_type: MarketType
-
-    # Trading symbol, for example BTCUSDT
-    symbol: str
-
-    # Candle interval, for example 1m, 5m, 1h
+class Candle(BaseMarketData):
+    # Candle interval, for example 1m, 5m, or 1h
     interval: str
-
-    # Opening time of the candle
-    timestamp: datetime
 
     # OHLC price data
     open: float

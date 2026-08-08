@@ -4,7 +4,7 @@
 
 | Phase | Status | Progress |
 |---|---|---:|
-| 1. Core Data Models | 🟡 IN PROGRESS | 75% |
+| 1. Core Data Models | 🟡 IN PROGRESS | 92% |
 | 2. Exchange Interface | ⬜ TODO | 0% |
 | 3. Binance Integration | ⬜ TODO | 0% |
 | 4. Database Layer | ⬜ TODO | 0% |
@@ -27,16 +27,26 @@
 
 **Current Phase:** Phase 1 — Core Data Models  
 **Status:** 🟡 IN PROGRESS  
-**Next Milestone:** Complete the data model documentation and define the exchange interface.
+**Next Milestone:** Finalize the model layer and begin the `BaseExchange` contract.
+
+### Completed Recently
+
+- [x] Add `BaseMarketData`
+- [x] Refactor `Candle` to inherit from `BaseMarketData`
+- [x] Refactor `Trade` to inherit from `BaseMarketData`
+- [x] Refactor `OpenInterest` to inherit from `BaseMarketData`
+- [x] Refactor `FundingRate` to inherit from `BaseMarketData`
+- [x] Update `models/__init__.py`
+- [x] Update `data_model.md`
+- [x] Update `architecture.md`
 
 ### Next Tasks
 
-- [ ] Finish `data_model.md`
 - [ ] Review naming conventions
-- [ ] Review existing models
-- [ ] Define `BaseExchange`
+- [ ] Add basic tests for models
+- [ ] Mark Phase 1 as complete
+- [ ] Create `BaseExchange`
 - [ ] Define exchange method contracts
-
 ## Status Legend
 
 - ✅ **DONE** — all tasks in the phase are completed
@@ -59,26 +69,40 @@ Advanced analytics, market scanning, backtesting, and machine learning will be a
 
 ### Goal
 
-Define the common data structures used across all exchanges.
+Define clean, reusable, and exchange-independent data structures.
 
 ### Tasks
 
 - [x] Create project structure
 - [x] Create enums
+- [x] Create `BaseMarketData`
 - [x] Create `Candle`
 - [x] Create `Trade`
 - [x] Create `OpenInterest`
 - [x] Create `FundingRate`
+- [x] Refactor market models to inherit from `BaseMarketData`
+- [x] Update `models/__init__.py`
 - [x] Create `README.md`
 - [x] Create `architecture.md`
 - [x] Create `roadmap.md`
-- [ ] Create `data_model.md`
+- [x] Create `data_model.md`
+- [x] Update architecture documentation after the base-model refactor
 - [ ] Review naming conventions
 - [ ] Add basic tests for models
 
+### Current Model Hierarchy
+
+```text
+BaseMarketData
+├── Candle
+├── Trade
+├── OpenInterest
+└── FundingRate
+```
+
 ### Expected Result
 
-A clean and exchange-independent data model.
+A clean and exchange-independent model layer with shared market identity fields and minimal duplication.
 ---
 
 ## Phase 2 — Exchange Interface
@@ -642,7 +666,7 @@ Exchange Clients
     ↓
 Collectors
     ↓
-Normalized Models
+BaseMarketData Child Models
     ↓
 Database
     ↓

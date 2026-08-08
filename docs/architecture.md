@@ -32,6 +32,7 @@ crypto-market-intelligence/
 │
 ├── models/
 │   ├── __init__.py
+│   ├── base_market_data.py
 │   ├── candle.py
 │   ├── trade.py
 │   ├── open_interest.py
@@ -109,9 +110,19 @@ Data models represent normalized market data.
 
 They should contain data only and remain independent from external APIs and database implementations.
 
-### Candle
+The current model hierarchy uses a small shared base class to avoid repeating common market-data fields.
 
-Represents one OHLCV candle.
+```text
+BaseMarketData
+├── Candle
+├── Trade
+├── OpenInterest
+└── FundingRate
+```
+
+### BaseMarketData
+
+`BaseMarketData` contains attributes shared by all current market data models.
 
 Fields:
 
@@ -119,8 +130,29 @@ Fields:
 exchange
 market_type
 symbol
-interval
 timestamp
+```
+
+Responsibilities:
+
+- provide a consistent source identity for market records,
+- standardize exchange, market type, symbol, and timestamp,
+- reduce duplication between specialized models.
+
+`BaseMarketData` should contain only fields that are genuinely common to all child models.
+
+It should not contain exchange API logic, database logic, indicators, or model-specific fields.
+
+### Candle
+
+Represents one OHLCV candle.
+
+Inherits from `BaseMarketData`.
+
+Candle-specific fields:
+
+```text
+interval
 open
 high
 low
@@ -132,14 +164,12 @@ volume
 
 Represents one executed market trade.
 
-Fields:
+Inherits from `BaseMarketData`.
+
+Trade-specific fields:
 
 ```text
-exchange
-market_type
-symbol
 trade_id
-timestamp
 price
 quantity
 quote_value
@@ -152,13 +182,11 @@ side
 
 Represents one Open Interest measurement.
 
-Fields:
+Inherits from `BaseMarketData`.
+
+Open-Interest-specific fields:
 
 ```text
-exchange
-market_type
-symbol
-timestamp
 open_interest
 open_interest_usd
 ```
@@ -167,17 +195,26 @@ open_interest_usd
 
 Represents one funding rate measurement.
 
-Fields:
+Inherits from `BaseMarketData`.
+
+Funding-specific fields:
 
 ```text
-exchange
-market_type
-symbol
-timestamp
 funding_rate
 next_funding_time
 ```
 
+### Model Design Rule
+
+The inheritance hierarchy is intentionally shallow.
+
+```text
+BaseMarketData
+    ↓
+Specialized Market Data Model
+```
+
+The project should avoid deep inheritance trees. New models should inherit from `BaseMarketData` only when they genuinely share its common market identity fields.
 ---
 
 ## 5. Enum Layer
@@ -231,7 +268,7 @@ BybitExchange
 OKXExchange
 ```
 
-Each implementation converts exchange-specific API responses into the common project data models.
+Each implementation converts exchange-specific API responses into the common project data models derived from `BaseMarketData`.
 
 ---
 
@@ -411,7 +448,7 @@ Responsibilities:
 - select an exchange client,
 - request specific market data,
 - request data for a defined time range,
-- return normalized Python models.
+- return normalized `BaseMarketData` child models.
 
 Conceptual operations:
 
@@ -542,7 +579,7 @@ Responsibilities:
 1. Ask the repository for the latest stored timestamp.
 2. Determine the missing time range.
 3. Ask the collector to download missing data.
-4. Receive normalized Python models.
+4. Receive normalized `BaseMarketData` child models.
 5. Save the new records using repositories.
 6. Update the synchronization state.
 
@@ -561,7 +598,7 @@ Exchange Client
         ↓
 Exchange API
         ↓
-Normalized Models
+BaseMarketData Child Models
         ↓
 Repository
         ↓
@@ -629,7 +666,7 @@ Trades
 Open Interest
 Funding Rate
     ↓
-Normalized Python Models
+BaseMarketData Child Models
     ↓
 Database
 ```
@@ -716,8 +753,11 @@ Exchange
 Collector
     = coordinates data collection
 
+BaseMarketData
+    = provides shared market identity fields
+
 Model
-    = represents data
+    = represents specialized normalized market data
 
 Repository
     = reads and writes database records

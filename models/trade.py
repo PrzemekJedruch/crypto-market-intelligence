@@ -1,27 +1,13 @@
 from dataclasses import dataclass
-from datetime import datetime
 
-from enums.exchange import Exchange
-from enums.market_type import MarketType
+from models.base_market_data import BaseMarketData
 from enums.trade_side import TradeSide
 
 
 @dataclass
-class Trade:
-    # Exchange from which the trade data comes
-    exchange: Exchange
-
-    # Type of market, for example spot or perpetual
-    market_type: MarketType
-
-    # Trading symbol, for example BTCUSDT
-    symbol: str
-
+class Trade(BaseMarketData):
     # Unique trade identifier provided by the exchange
     trade_id: int
-
-    # Time when the trade was executed
-    timestamp: datetime
 
     # Execution price
     price: float
@@ -34,4 +20,5 @@ class Trade:
 
     # Aggressor side of the trade
     side: TradeSide
+
     
