@@ -5,7 +5,7 @@
 | Phase | Status | Progress |
 |---|---|---:|
 | 1. Core Data Models | ✅ DONE | 100% |
-| 2. Exchange Interface | 🟡 IN PROGRESS | 60% |
+| 2. Exchange Interface | 🟡 IN PROGRESS | 80% |
 | 3. Binance Integration | ⬜ TODO | 0% |
 | 4. Database Layer | ⬜ TODO | 0% |
 | 5. Historical Synchronization | ⬜ TODO | 0% |
@@ -38,12 +38,10 @@
 - [x] Define `get_funding_rate()`
 - [x] Define `get_supported_symbols()`
 - [x] Standardize timestamps
-
+- [x] Standardize symbol handling
 
 ### Next Tasks
 
-
-- [ ] Standardize symbol handling
 - [ ] Standardize returned models
 
 ## Status Legend
@@ -122,7 +120,7 @@ Create a common contract for exchange integrations.
 - [x] Define `get_funding_rate()`
 - [x] Define `get_supported_symbols()`
 - [x] Standardize timestamps
-- [ ] Standardize symbol handling
+- [x] Standardize symbol handling
 - [ ] Standardize returned models
 
 ### Expected Result
