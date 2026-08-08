@@ -1,5 +1,49 @@
 # Crypto Market Intelligence — Roadmap
 
+## Project Status
+
+| Phase | Status | Progress |
+|---|---|---:|
+| 1. Core Data Models | 🟡 IN PROGRESS | 75% |
+| 2. Exchange Interface | ⬜ TODO | 0% |
+| 3. Binance Integration | ⬜ TODO | 0% |
+| 4. Database Layer | ⬜ TODO | 0% |
+| 5. Historical Synchronization | ⬜ TODO | 0% |
+| 6. Data Quality | ⬜ TODO | 0% |
+| 7. Bybit Integration | ⬜ TODO | 0% |
+| 8. OKX Integration | ⬜ TODO | 0% |
+| 9. Multi-Symbol Support | ⬜ TODO | 0% |
+| 10. Live Market Data | ⬜ TODO | 0% |
+| 11. Feature Engineering | ⬜ TODO | 0% |
+| 12. Cross-Exchange Aggregation | ⬜ TODO | 0% |
+| 13. Market Scanner | ⬜ TODO | 0% |
+| 14. Market Scoring | ⬜ TODO | 0% |
+| 15. Backtesting | ⬜ TODO | 0% |
+| 16. Machine Learning | ⬜ TODO | 0% |
+| 17. Signal Engine | ⬜ TODO | 0% |
+| 18. Product Layer | ⬜ TODO | 0% |
+
+## Current Focus
+
+**Current Phase:** Phase 1 — Core Data Models  
+**Status:** 🟡 IN PROGRESS  
+**Next Milestone:** Complete the data model documentation and define the exchange interface.
+
+### Next Tasks
+
+- [ ] Finish `data_model.md`
+- [ ] Review naming conventions
+- [ ] Review existing models
+- [ ] Define `BaseExchange`
+- [ ] Define exchange method contracts
+
+## Status Legend
+
+- ✅ **DONE** — all tasks in the phase are completed
+- 🟡 **IN PROGRESS** — work is currently active
+- ⬜ **TODO** — work has not started yet
+- 🔴 **BLOCKED** — progress is currently blocked
+
 ## Project Direction
 
 The project will be developed in small stages.
@@ -11,30 +55,35 @@ Advanced analytics, market scanning, backtesting, and machine learning will be a
 
 ## Phase 1 — Core Data Models
 
+**Status:** 🟡 IN PROGRESS
+
 ### Goal
 
 Define the common data structures used across all exchanges.
 
 ### Tasks
 
-- Create project structure
-- Create enums
-- Create `Candle`
-- Create `Trade`
-- Create `OpenInterest`
-- Create `FundingRate`
-- Define naming conventions
-- Document the initial architecture
+- [x] Create project structure
+- [x] Create enums
+- [x] Create `Candle`
+- [x] Create `Trade`
+- [x] Create `OpenInterest`
+- [x] Create `FundingRate`
+- [x] Create `README.md`
+- [x] Create `architecture.md`
+- [x] Create `roadmap.md`
+- [ ] Create `data_model.md`
+- [ ] Review naming conventions
+- [ ] Add basic tests for models
 
 ### Expected Result
 
 A clean and exchange-independent data model.
-
-Status: **In progress**
-
 ---
 
 ## Phase 2 — Exchange Interface
+
+**Status:** ⬜ TODO
 
 ### Goal
 
@@ -42,15 +91,15 @@ Create a common contract for exchange integrations.
 
 ### Tasks
 
-- Create `BaseExchange`
-- Define `get_candles()`
-- Define `get_trades()`
-- Define `get_open_interest()`
-- Define `get_funding_rate()`
-- Define `get_supported_symbols()`
-- Standardize timestamps
-- Standardize symbol handling
-- Standardize returned models
+- [ ] Create `BaseExchange`
+- [ ] Define `get_candles()`
+- [ ] Define `get_trades()`
+- [ ] Define `get_open_interest()`
+- [ ] Define `get_funding_rate()`
+- [ ] Define `get_supported_symbols()`
+- [ ] Standardize timestamps
+- [ ] Standardize symbol handling
+- [ ] Standardize returned models
 
 ### Expected Result
 
@@ -59,6 +108,8 @@ Every supported exchange can be used through the same interface.
 ---
 
 ## Phase 3 — Binance Integration
+
+**Status:** ⬜ TODO
 
 ### Goal
 
@@ -74,14 +125,14 @@ Symbol: BTCUSDT
 
 ### Tasks
 
-- Connect to Binance public API
-- Download candles
-- Download trades
-- Download Open Interest
-- Download funding rates
-- Convert Binance responses into internal models
-- Add basic error handling
-- Add request limits and pagination handling
+- [ ] Connect to Binance public API
+- [ ] Download candles
+- [ ] Download trades
+- [ ] Download Open Interest
+- [ ] Download funding rates
+- [ ] Convert Binance responses into internal models
+- [ ] Add basic error handling
+- [ ] Add request limits and pagination handling
 
 ### Expected Result
 
@@ -91,22 +142,24 @@ Python can retrieve normalized BTCUSDT market data from Binance.
 
 ## Phase 4 — Database Layer
 
+**Status:** ⬜ TODO
+
 ### Goal
 
 Store market data persistently.
 
 ### Tasks
 
-- Configure PostgreSQL
-- Create database connection layer
-- Create candle table
-- Create trade table
-- Create Open Interest table
-- Create funding rate table
-- Create synchronization state table
-- Create repositories
-- Add unique constraints
-- Prevent duplicate records
+- [ ] Configure PostgreSQL
+- [ ] Create database connection layer
+- [ ] Create candle table
+- [ ] Create trade table
+- [ ] Create Open Interest table
+- [ ] Create funding rate table
+- [ ] Create synchronization state table
+- [ ] Create repositories
+- [ ] Add unique constraints
+- [ ] Prevent duplicate records
 
 ### Expected Result
 
@@ -116,20 +169,22 @@ Downloaded market data can be stored and retrieved reliably.
 
 ## Phase 5 — Historical Synchronization
 
+**Status:** ⬜ TODO
+
 ### Goal
 
 Download only missing data instead of downloading the full history every time.
 
 ### Tasks
 
-- Store last synchronized timestamp
-- Detect missing time ranges
-- Fetch missing data only
-- Update synchronization state
-- Handle interrupted synchronization
-- Validate continuity
-- Detect duplicates
-- Detect missing records
+- [ ] Store last synchronized timestamp
+- [ ] Detect missing time ranges
+- [ ] Fetch missing data only
+- [ ] Update synchronization state
+- [ ] Handle interrupted synchronization
+- [ ] Validate continuity
+- [ ] Detect duplicates
+- [ ] Detect missing records
 
 ### Expected Result
 
@@ -153,20 +208,22 @@ Update sync state
 
 ## Phase 6 — Data Quality
 
+**Status:** ⬜ TODO
+
 ### Goal
 
 Verify that stored data is trustworthy.
 
 ### Tasks
 
-- Check missing timestamps
-- Check duplicate records
-- Check invalid prices
-- Check invalid volumes
-- Compare stored data with exchange responses
-- Validate UTC timestamps
-- Add logging
-- Add basic tests
+- [ ] Check missing timestamps
+- [ ] Check duplicate records
+- [ ] Check invalid prices
+- [ ] Check invalid volumes
+- [ ] Compare stored data with exchange responses
+- [ ] Validate UTC timestamps
+- [ ] Add logging
+- [ ] Add basic tests
 
 ### Expected Result
 
@@ -176,20 +233,22 @@ A stable and auditable historical dataset.
 
 ## Phase 7 — Bybit Integration
 
+**Status:** ⬜ TODO
+
 ### Goal
 
 Add the second exchange without changing the core architecture.
 
 ### Tasks
 
-- Implement `BybitExchange`
-- Map Bybit symbols
-- Normalize Bybit candles
-- Normalize Bybit trades
-- Normalize Bybit Open Interest
-- Normalize Bybit funding rates
-- Reuse existing repositories
-- Reuse synchronization logic
+- [ ] Implement `BybitExchange`
+- [ ] Map Bybit symbols
+- [ ] Normalize Bybit candles
+- [ ] Normalize Bybit trades
+- [ ] Normalize Bybit Open Interest
+- [ ] Normalize Bybit funding rates
+- [ ] Reuse existing repositories
+- [ ] Reuse synchronization logic
 
 ### Expected Result
 
@@ -199,17 +258,19 @@ The same application workflow works for Binance and Bybit.
 
 ## Phase 8 — OKX Integration
 
+**Status:** ⬜ TODO
+
 ### Goal
 
 Add a third major derivatives exchange.
 
 ### Tasks
 
-- Implement `OKXExchange`
-- Normalize market data
-- Reuse the common data models
-- Reuse synchronization logic
-- Compare values across exchanges
+- [ ] Implement `OKXExchange`
+- [ ] Normalize market data
+- [ ] Reuse the common data models
+- [ ] Reuse synchronization logic
+- [ ] Compare values across exchanges
 
 ### Expected Result
 
@@ -224,6 +285,8 @@ OKX
 ---
 
 ## Phase 9 — Multi-Symbol Support
+
+**Status:** ⬜ TODO
 
 ### Goal
 
@@ -248,11 +311,11 @@ Top 100
 
 ### Tasks
 
-- Add symbol configuration
-- Add exchange-specific symbol mapping
-- Synchronize multiple symbols
-- Track sync state per symbol
-- Handle unavailable instruments
+- [ ] Add symbol configuration
+- [ ] Add exchange-specific symbol mapping
+- [ ] Synchronize multiple symbols
+- [ ] Track sync state per symbol
+- [ ] Handle unavailable instruments
 
 ### Expected Result
 
@@ -262,20 +325,22 @@ The system can collect data for many markets automatically.
 
 ## Phase 10 — Live Market Data
 
+**Status:** ⬜ TODO
+
 ### Goal
 
 Add real-time data collection.
 
 ### Tasks
 
-- Add WebSocket connections
-- Stream trades
-- Stream order book updates
-- Handle reconnects
-- Handle heartbeat messages
-- Handle temporary disconnects
-- Store live data
-- Merge live and historical datasets
+- [ ] Add WebSocket connections
+- [ ] Stream trades
+- [ ] Stream order book updates
+- [ ] Handle reconnects
+- [ ] Handle heartbeat messages
+- [ ] Handle temporary disconnects
+- [ ] Store live data
+- [ ] Merge live and historical datasets
 
 ### Expected Result
 
@@ -284,6 +349,8 @@ The database is continuously updated with new market data.
 ---
 
 ## Phase 11 — Feature Engineering
+
+**Status:** ⬜ TODO
 
 ### Goal
 
@@ -324,6 +391,8 @@ A feature dataset ready for analysis and modeling.
 
 ## Phase 12 — Cross-Exchange Aggregation
 
+**Status:** ⬜ TODO
+
 ### Goal
 
 Create global market metrics from multiple exchanges.
@@ -354,12 +423,12 @@ Global Futures CVD
 
 ### Tasks
 
-- Normalize measurement units
-- Apply exchange weights where appropriate
-- Align timestamps
-- Aggregate data
-- Compare exchange behavior
-- Detect divergences
+- [ ] Normalize measurement units
+- [ ] Apply exchange weights where appropriate
+- [ ] Align timestamps
+- [ ] Aggregate data
+- [ ] Compare exchange behavior
+- [ ] Detect divergences
 
 ### Expected Result
 
@@ -368,6 +437,8 @@ The platform provides a market-wide view instead of a single-exchange view.
 ---
 
 ## Phase 13 — Market Scanner
+
+**Status:** ⬜ TODO
 
 ### Goal
 
@@ -400,6 +471,8 @@ XRPUSDT    45
 
 ## Phase 14 — Market Scoring
 
+**Status:** ⬜ TODO
+
 ### Goal
 
 Create an interpretable market opportunity score.
@@ -431,22 +504,24 @@ Machine learning should not be introduced until the rule-based system and datase
 
 ## Phase 15 — Backtesting
 
+**Status:** ⬜ TODO
+
 ### Goal
 
 Measure whether scanner conditions and signals have historical value.
 
 ### Tasks
 
-- Define entry conditions
-- Define exit conditions
-- Include trading fees
-- Include slippage
-- Calculate returns
-- Calculate win rate
-- Calculate expectancy
-- Calculate drawdown
-- Calculate profit factor
-- Perform walk-forward testing
+- [ ] Define entry conditions
+- [ ] Define exit conditions
+- [ ] Include trading fees
+- [ ] Include slippage
+- [ ] Calculate returns
+- [ ] Calculate win rate
+- [ ] Calculate expectancy
+- [ ] Calculate drawdown
+- [ ] Calculate profit factor
+- [ ] Perform walk-forward testing
 
 ### Expected Result
 
@@ -455,6 +530,8 @@ The project can distinguish useful signals from visually interesting but unprofi
 ---
 
 ## Phase 16 — Machine Learning
+
+**Status:** ⬜ TODO
 
 ### Goal
 
@@ -493,6 +570,8 @@ ML becomes an additional analytical layer, not the foundation of the platform.
 
 ## Phase 17 — Signal Engine
 
+**Status:** ⬜ TODO
+
 ### Goal
 
 Convert scanner and model outputs into structured market signals.
@@ -529,6 +608,8 @@ Reasons:
 ---
 
 ## Phase 18 — Product Layer
+
+**Status:** ⬜ TODO
 
 ### Goal
 
