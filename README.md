@@ -399,4 +399,26 @@ This is an independent project. Any analysis, indicators, models, signals, forec
 
 ## Disclaimer
 
-This project is intended for research, data analysis, and software development purposes. It does not constitute financial or investment advice.
+This project is provided for educational, research, data analysis, and software development purposes only.
+
+Nothing contained in this repository, including source code, market data, indicators, analytical features, signals, scores, predictions, machine learning outputs, documentation, examples, or other generated information, constitutes financial, investment, trading, legal, tax, or professional advice.
+
+The project does not provide any recommendation or solicitation to buy, sell, hold, or otherwise trade cryptocurrencies, derivatives, securities, or any other financial instruments.
+
+Cryptocurrency and derivatives markets involve substantial risk, including the possible loss of some or all invested capital. Historical performance, backtesting results, simulated results, statistical relationships, model predictions, or market signals do not guarantee future performance.
+
+All data, calculations, indicators, models, signals, and other outputs are provided on an "as is" and "as available" basis without warranties of any kind, either express or implied. No guarantee is made regarding the accuracy, completeness, reliability, timeliness, availability, or correctness of market data or analytical results.
+
+Market data may contain errors, delays, missing observations, inconsistencies, exchange-specific differences, API failures, or other inaccuracies. External exchanges, APIs, libraries, network services, and data providers may also change, become unavailable, or return incorrect or incomplete information.
+
+The author assumes no responsibility or liability for any financial losses, trading losses, lost profits, missed opportunities, data loss, system failures, damages, or other consequences resulting directly or indirectly from the use of this project, its code, documentation, market data, analytical outputs, or derived information.
+
+Any use of this project for live trading, automated trading, investment decisions, risk management, or other financial activity is performed entirely at the user's own risk and responsibility.
+
+Users are responsible for independently verifying all data, calculations, assumptions, signals, and results before relying on them for any purpose.
+
+The project is independent and is not affiliated with, sponsored by, endorsed by, or officially connected with Binance, Bybit, OKX, Coinbase, Kraken, or any other exchange, broker, financial institution, or data provider unless explicitly stated otherwise.
+
+Use of third-party APIs and market data is subject to the terms, conditions, licensing requirements, rate limits, and policies of the respective providers.
+
+By using this repository, you acknowledge that you are solely responsible for evaluating the risks associated with its use and for complying with any laws, regulations, exchange rules, tax obligations, or other requirements applicable in your jurisdiction.
