@@ -4,8 +4,8 @@
 
 | Phase | Status | Progress |
 |---|---|---:|
-| 1. Core Data Models | 🟡 IN PROGRESS | 92% |
-| 2. Exchange Interface | ⬜ TODO | 0% |
+| 1. Core Data Models | ✅ DONE | 100% |
+| 2. Exchange Interface | 🟡 IN PROGRESS | 0% |
 | 3. Binance Integration | ⬜ TODO | 0% |
 | 4. Database Layer | ⬜ TODO | 0% |
 | 5. Historical Synchronization | ⬜ TODO | 0% |
@@ -25,28 +25,33 @@
 
 ## Current Focus
 
-**Current Phase:** Phase 1 — Core Data Models  
+**Current Phase:** Phase 2 — Exchange Interface
 **Status:** 🟡 IN PROGRESS  
-**Next Milestone:** Finalize the model layer and begin the `BaseExchange` contract.
-
+**Next Milestone:**  Define the BaseExchange contract.
 ### Completed Recently
 
 - [x] Add `BaseMarketData`
-- [x] Refactor `Candle` to inherit from `BaseMarketData`
-- [x] Refactor `Trade` to inherit from `BaseMarketData`
-- [x] Refactor `OpenInterest` to inherit from `BaseMarketData`
-- [x] Refactor `FundingRate` to inherit from `BaseMarketData`
+- [x] Refactor market models to inherit from `BaseMarketData`
 - [x] Update `models/__init__.py`
+- [x] Update `enums/__init__.py`
+- [x] Review naming conventions
+- [x] Define code comment and docstring conventions
+- [x] Add basic tests for all market models
+- [x] Run the model test suite successfully
 - [x] Update `data_model.md`
 - [x] Update `architecture.md`
+- [x] Complete Phase 1 — Core Data Models
 
 ### Next Tasks
 
-- [ ] Review naming conventions
-- [ ] Add basic tests for models
-- [ ] Mark Phase 1 as complete
 - [ ] Create `BaseExchange`
-- [ ] Define exchange method contracts
+- [ ] Define `get_candles()`
+- [ ] Define `get_trades()`
+- [ ] Define `get_open_interest()`
+- [ ] Define `get_funding_rate()`
+- [ ] Define `get_supported_symbols()`
+- [ ] Standardize exchange method contracts
+
 ## Status Legend
 
 - ✅ **DONE** — all tasks in the phase are completed
@@ -65,7 +70,7 @@ Advanced analytics, market scanning, backtesting, and machine learning will be a
 
 ## Phase 1 — Core Data Models
 
-**Status:** 🟡 IN PROGRESS
+**Status:** ✅ **DONE**
 
 ### Goal
 
@@ -87,8 +92,9 @@ Define clean, reusable, and exchange-independent data structures.
 - [x] Create `roadmap.md`
 - [x] Create `data_model.md`
 - [x] Update architecture documentation after the base-model refactor
-- [ ] Review naming conventions
-- [ ] Add basic tests for models
+- [x] Review naming conventions
+- [x] Define comment and docstring conventions
+- [x] Add basic tests for all models
 
 ### Current Model Hierarchy
 
@@ -107,7 +113,7 @@ A clean and exchange-independent model layer with shared market identity fields 
 
 ## Phase 2 — Exchange Interface
 
-**Status:** ⬜ TODO
+**Status:** 🟡 **IN PROGRESS**
 
 ### Goal
 

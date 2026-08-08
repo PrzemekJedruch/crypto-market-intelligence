@@ -533,3 +533,95 @@ Exchange API
 → database
 → synchronization
 ```
+
+
+---
+
+## 17. Naming Conventions
+
+The model layer follows consistent Python naming conventions.
+
+### Files
+
+Model files use `snake_case`:
+
+```text
+base_market_data.py
+candle.py
+trade.py
+open_interest.py
+funding_rate.py
+```
+
+### Classes
+
+Model classes use `PascalCase`:
+
+```text
+BaseMarketData
+Candle
+Trade
+OpenInterest
+FundingRate
+```
+
+### Fields
+
+Model fields use `snake_case`:
+
+```text
+market_type
+trade_id
+quote_value
+open_interest
+open_interest_usd
+funding_rate
+next_funding_time
+```
+
+The current names should remain short and domain-specific. `OpenInterest` is preferred over `OpenInterestData` because the surrounding model layer already makes the data-record meaning clear.
+
+---
+
+## 18. Model Testing
+
+Basic tests should verify that each model can be constructed correctly and that inheritance from `BaseMarketData` works as expected.
+
+Initial test file:
+
+```text
+tests/test_models.py
+```
+
+Initial test scope:
+
+```text
+BaseMarketData
+Candle
+Trade
+OpenInterest
+FundingRate
+```
+
+Tests should verify:
+
+- inherited fields such as `exchange`, `market_type`, `symbol`, and `timestamp`,
+- model-specific fields,
+- enum values,
+- optional fields such as `next_funding_time`,
+- correct inheritance from `BaseMarketData`.
+
+The initial tests should remain simple. Validation of market rules and exchange-specific normalization will be added later.
+
+### Code Documentation Standard
+
+Comments in Python code should be written in English.
+
+Functions and methods should include concise docstrings describing their purpose.
+
+Example:
+
+```python
+def test_base_market_data_creation():
+    """Test that BaseMarketData stores all common market data fields correctly."""
+```

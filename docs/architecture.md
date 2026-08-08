@@ -68,6 +68,9 @@ crypto-market-intelligence/
 │   ├── __init__.py
 │   └── market_data_service.py
 │
+├── tests/
+│   └── test_models.py
+│
 └── docs/
     ├── architecture.md
     ├── data_model.md
@@ -100,6 +103,7 @@ The project should follow these rules:
 - Repository classes do not know anything about exchange APIs.
 - Data models do not contain API logic.
 - Services coordinate the workflow between components.
+- Tests verify model construction, inheritance, and expected field values.
 - Feature engineering will be added later and will not be mixed with raw data collection.
 
 ---
@@ -770,3 +774,66 @@ Feature Engine
 ```
 
 This structure keeps the project modular and makes it possible to add more exchanges, data types, databases, and analytical modules without rewriting the entire application.
+
+
+---
+
+## 20. Testing and Code Documentation
+
+### Model Tests
+
+Basic model tests are stored in:
+
+```text
+tests/
+└── test_models.py
+```
+
+The initial model test suite should verify:
+
+```text
+BaseMarketData creation
+Candle creation and inheritance
+Trade creation and inheritance
+OpenInterest creation and inheritance
+FundingRate creation and inheritance
+```
+
+Tests should use `pytest`.
+
+The goal of the first tests is not to validate advanced market logic. They should confirm that the model layer can be instantiated correctly and that inherited fields behave as expected.
+
+### Naming Convention
+
+The project follows standard Python naming conventions:
+
+```text
+modules / files      snake_case
+functions / methods  snake_case
+variables            snake_case
+classes              PascalCase
+enum members          UPPER_CASE
+```
+
+Examples:
+
+```text
+base_market_data.py → BaseMarketData
+open_interest.py    → OpenInterest
+funding_rate.py      → FundingRate
+```
+
+### Comments and Docstrings
+
+Code comments should be written in English.
+
+Functions and methods should include a concise docstring describing their purpose.
+
+Example:
+
+```python
+def test_base_market_data_creation():
+    """Test that BaseMarketData stores all common market data fields correctly."""
+```
+
+Comments should explain useful context or intent and should avoid repeating obvious code behavior.
