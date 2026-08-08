@@ -282,6 +282,30 @@ Business logic should not be placed directly inside API clients or data models.
 
 Early development — core architecture and market data models are being defined.
 
+
+## Licensing, Author, and Acknowledgements
+
+- **Author:** Przemyslaw Jedruch
+- **Project type:** Independent educational and research project focused on cryptocurrency market data engineering, quantitative analysis, and market intelligence.
+- **Market data sources:** Market data will be collected from public APIs provided by cryptocurrency exchanges such as Binance, Bybit, OKX, Coinbase, and Kraken.
+- **Data attribution:** All market data remains subject to the terms, licensing conditions, and usage policies of the respective exchanges and data providers.
+- **Code license:** A software license has not yet been selected for this repository. A dedicated `LICENSE` file should be added before defining reuse or redistribution terms.
+- **Acknowledgements:** This project relies on the open-source Python ecosystem and the public API documentation provided by cryptocurrency exchanges and data providers.
+
+This is an independent project. Any analysis, indicators, models, signals, forecasts, or conclusions produced by this repository are the author's own and do not represent an endorsement by any exchange, data provider, or third-party organization.
+
+## References
+
+- [Binance Developers](https://developers.binance.com/)
+- [Bybit API Documentation](https://bybit-exchange.github.io/docs/)
+- [OKX API Documentation](https://www.okx.com/docs-v5/en/)
+- [Coinbase Developer Documentation](https://docs.cdp.coinbase.com/)
+- [Kraken API Documentation](https://docs.kraken.com/api/)
+- [Python Documentation](https://docs.python.org/3/)
+- [pandas Documentation](https://pandas.pydata.org/docs/)
+- [Polars Documentation](https://docs.pola.rs/)
+- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
+
 ## Disclaimer
 
 This project is intended for research, data analysis, and software development purposes. It does not constitute financial or investment advice.
