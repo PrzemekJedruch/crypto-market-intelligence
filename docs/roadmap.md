@@ -38,12 +38,10 @@
 - [x] Define `get_funding_rate()`
 - [x] Define `get_supported_symbols()`
 - [x] Standardize timestamps
-
+- [x] Standardize symbol handling
 
 ### Next Tasks
 
-
-- [ ] Standardize symbol handling
 - [ ] Standardize returned models
 
 ## Status Legend
@@ -122,7 +120,7 @@ Create a common contract for exchange integrations.
 - [x] Define `get_funding_rate()`
 - [x] Define `get_supported_symbols()`
 - [x] Standardize timestamps
-- [ ] Standardize symbol handling
+- [x] Standardize symbol handling
 - [ ] Standardize returned models
 
 ### Expected Result

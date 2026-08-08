@@ -68,8 +68,29 @@ class BaseExchange:
     @staticmethod
     def _normalize_timestamp(timestamp: datetime) -> datetime:
         """Return a timezone-aware datetime normalized to UTC."""
-        
+
         if timestamp.tzinfo is None:
             raise ValueError("Timestamp must be timezone-aware.")
 
         return timestamp.astimezone(timezone.utc)
+
+    @staticmethod
+    def _normalize_symbol(symbol: str) -> str:
+        """Normalize a symbol to uppercase alphanumeric format without separators.
+
+        Examples:
+            "ethusdt" -> "ETHUSDT"
+            " BTCUSDT " -> "BTCUSDT"
+            "BTC-USDT" -> ValueError
+        """
+        normalized_symbol = symbol.strip().upper()
+
+        if not normalized_symbol:
+            raise ValueError("Symbol cannot be empty.")
+
+        if not normalized_symbol.isalnum():
+            raise ValueError("Symbol must contain only letters and numbers.")
+
+        return normalized_symbol
+
+    

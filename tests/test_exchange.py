@@ -37,3 +37,25 @@ def test_normalize_timestamp_rejects_naive_datetime():
 
     with pytest.raises(ValueError, match="Timestamp must be timezone-aware."):
         BaseExchange._normalize_timestamp(timestamp)
+
+def test_normalize_symbol():
+    """Test that a symbol is normalized to uppercase without surrounding spaces."""
+    symbol = " ethusdt "
+
+    normalized = BaseExchange._normalize_symbol(symbol)
+
+    assert normalized == "ETHUSDT"
+
+def test_normalize_symbol_rejects_invalid_format():
+    """Test that symbols with separators are rejected."""
+    symbol = "BTC-USDT"
+
+    with pytest.raises(ValueError, match="Symbol must contain only letters and numbers."):
+        BaseExchange._normalize_symbol(symbol)
+
+def test_normalize_symbol_rejects_empty_symbol():
+    """Test that an empty symbol is rejected."""
+    symbol = "   "
+
+    with pytest.raises(ValueError, match="Symbol cannot be empty."):
+        BaseExchange._normalize_symbol(symbol)
