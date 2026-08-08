@@ -6,7 +6,7 @@ The project is designed to collect, normalize, store, and later analyze market d
 
 ## Project Goals
 
-The first stage of the project focuses on building a clean and reliable market data pipeline.
+The first stages of the project focus on building a clean and reliable market data pipeline.
 
 The system will:
 
@@ -32,6 +32,60 @@ Planned exchanges include:
 - Coinbase
 - Kraken
 
+## Current Status
+
+### Phase 1 — Core Data Models
+
+**Status: ✅ DONE**
+
+The first development phase is complete.
+
+Implemented:
+
+- `BaseMarketData`
+- `Candle`
+- `Trade`
+- `OpenInterest`
+- `FundingRate`
+- `Exchange`
+- `MarketType`
+- `TradeSide`
+- model and enum exports through `__init__.py`
+- naming conventions
+- English code comments and function/method docstrings
+- basic `pytest` coverage for all current market models
+
+The model test suite verifies:
+
+- object creation,
+- inheritance from `BaseMarketData`,
+- inherited common fields,
+- model-specific fields,
+- enum usage,
+- optional funding data.
+
+Tests are currently run with:
+
+```bash
+python -m pytest
+```
+
+### Phase 2 — Exchange Interface
+
+**Status: 🟡 IN PROGRESS**
+
+The next milestone is to define the common exchange contract through `BaseExchange`.
+
+Planned methods:
+
+```text
+get_candles()
+get_trades()
+get_open_interest()
+get_funding_rate()
+get_supported_symbols()
+```
+
 ## Architecture
 
 The project follows a layered architecture with clear separation of responsibilities.
@@ -43,7 +97,7 @@ Exchange Client
     ↓
 Collector
     ↓
-Normalized Data Models
+BaseMarketData Child Models
     ↓
 Repository
     ↓
@@ -65,11 +119,12 @@ Each layer has one responsibility:
 - **Models** represent normalized market data.
 - **Repositories** handle database reads and writes.
 - **Services** coordinate application workflows.
+- **Tests** verify model behavior, construction, and inheritance.
 - **Feature modules** will later calculate analytical market features.
 
 More details are available in [`docs/architecture.md`](docs/architecture.md).
 
-## Initial Project Structure
+## Project Structure
 
 ```text
 crypto-market-intelligence/
@@ -80,6 +135,7 @@ crypto-market-intelligence/
 │
 ├── models/
 │   ├── __init__.py
+│   ├── base_market_data.py
 │   ├── candle.py
 │   ├── trade.py
 │   ├── open_interest.py
@@ -115,26 +171,48 @@ crypto-market-intelligence/
 │   ├── __init__.py
 │   └── market_data_service.py
 │
+├── tests/
+│   └── test_models.py
+│
 └── docs/
     ├── architecture.md
     ├── data_model.md
     └── roadmap.md
 ```
 
-## Initial Data Models
+## Data Model
 
-### Candle
+The current model layer uses a small shared base class.
 
-Represents one OHLCV candle.
+```text
+BaseMarketData
+├── Candle
+├── Trade
+├── OpenInterest
+└── FundingRate
+```
 
-Main fields:
+### BaseMarketData
+
+Contains the common market identity fields:
 
 ```text
 exchange
 market_type
 symbol
-interval
 timestamp
+```
+
+The inheritance hierarchy is intentionally shallow. Specialized models inherit only the fields that are genuinely shared.
+
+### Candle
+
+Represents one OHLCV candle.
+
+Candle-specific fields:
+
+```text
+interval
 open
 high
 low
@@ -146,53 +224,45 @@ volume
 
 Represents one executed trade.
 
-Main fields:
+Trade-specific fields:
 
 ```text
-exchange
-market_type
-symbol
 trade_id
-timestamp
 price
 quantity
 quote_value
 side
 ```
 
-### Open Interest
+`side` represents the aggressor side of the transaction.
+
+### OpenInterest
 
 Represents one Open Interest measurement.
 
-Main fields:
+Open-Interest-specific fields:
 
 ```text
-exchange
-market_type
-symbol
-timestamp
 open_interest
 open_interest_usd
 ```
 
-### Funding Rate
+### FundingRate
 
 Represents one funding rate measurement.
 
-Main fields:
+Funding-specific fields:
 
 ```text
-exchange
-market_type
-symbol
-timestamp
 funding_rate
 next_funding_time
 ```
 
-## First Milestone
+Detailed model documentation is available in [`docs/data_model.md`](docs/data_model.md).
 
-The first working version will focus on:
+## First Working Milestone
+
+The first full data pipeline will focus on:
 
 ```text
 BTCUSDT
@@ -209,28 +279,44 @@ Normalized Python Models
 Database
 ```
 
-The application should also remember the latest synchronized timestamp so that subsequent runs download only missing data.
+The application should remember the latest synchronized timestamp so that subsequent runs download only missing data.
 
 ## Planned Development
 
-After the core data pipeline is stable, the project will be extended with:
+The project roadmap is divided into development phases.
 
-- Bybit and OKX integrations,
+Completed:
+
+```text
+Phase 1 — Core Data Models
+```
+
+Current:
+
+```text
+Phase 2 — Exchange Interface
+```
+
+Later phases include:
+
+- Binance integration,
+- PostgreSQL storage,
+- historical synchronization,
+- data-quality checks,
+- Bybit integration,
+- OKX integration,
 - multi-symbol support,
 - live WebSocket data,
+- feature engineering,
 - cross-exchange aggregation,
-- CVD,
-- Open Interest changes,
-- funding pressure,
-- spot vs futures divergence,
-- order book imbalance,
+- market scanning,
 - market scoring,
-- market scanner,
 - backtesting,
-- machine learning models,
-- alerts,
-- API,
-- dashboard.
+- machine learning,
+- signal generation,
+- API, dashboard, and alerts.
+
+See [`docs/roadmap.md`](docs/roadmap.md) for the complete development plan.
 
 ## Long-Term Vision
 
@@ -257,6 +343,7 @@ These features can later be used by a scanner or machine learning model to detec
 The initial stack is expected to include:
 
 - Python
+- pytest
 - PostgreSQL
 - Pandas / Polars
 - Asyncio
@@ -276,12 +363,15 @@ The project should remain:
 - easy to extend,
 - suitable for quantitative research.
 
-Business logic should not be placed directly inside API clients or data models.
+Additional code conventions:
 
-## Status
-
-Early development — core architecture and market data models are being defined.
-
+- modules and files use `snake_case`,
+- functions and methods use `snake_case`,
+- classes use `PascalCase`,
+- enum members use `UPPER_CASE`,
+- code comments are written in English,
+- functions and methods include concise docstrings,
+- business logic is not placed directly inside API clients or data models.
 
 ## Licensing, Author, and Acknowledgements
 
@@ -302,6 +392,7 @@ This is an independent project. Any analysis, indicators, models, signals, forec
 - [Coinbase Developer Documentation](https://docs.cdp.coinbase.com/)
 - [Kraken API Documentation](https://docs.kraken.com/api/)
 - [Python Documentation](https://docs.python.org/3/)
+- [pytest Documentation](https://docs.pytest.org/)
 - [pandas Documentation](https://pandas.pydata.org/docs/)
 - [Polars Documentation](https://docs.pola.rs/)
 - [PostgreSQL Documentation](https://www.postgresql.org/docs/)
