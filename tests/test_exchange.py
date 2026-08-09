@@ -2,6 +2,8 @@ from enums.exchange import Exchange
 from exchanges.base_exchange import BaseExchange
 from datetime import datetime, timedelta, timezone
 import pytest
+from exchanges.binance import BinanceExchange
+
 
 def test_base_exchange_creation():
     """Test that BaseExchange stores the exchange identifier correctly."""
@@ -59,3 +61,14 @@ def test_normalize_symbol_rejects_empty_symbol():
 
     with pytest.raises(ValueError, match="Symbol cannot be empty."):
         BaseExchange._normalize_symbol(symbol)
+
+def test_binance_exchange_creation():
+    """Test that BinanceExchange uses the Binance exchange identifier and base URL."""
+    exchange_client = BinanceExchange()
+
+    # Verify inheritance
+    assert isinstance(exchange_client, BaseExchange)
+
+    # Verify Binance-specific configuration
+    assert exchange_client.exchange == Exchange.BINANCE
+    assert exchange_client.BASE_URL == "https://fapi.binance.com"
