@@ -3,6 +3,7 @@ from exchanges.base_exchange import BaseExchange
 from datetime import datetime, timedelta, timezone
 import pytest
 from exchanges.binance import BinanceExchange
+from unittest.mock import patch
 
 
 def test_base_exchange_creation():
@@ -72,3 +73,24 @@ def test_binance_exchange_creation():
     # Verify Binance-specific configuration
     assert exchange_client.exchange == Exchange.BINANCE
     assert exchange_client.BASE_URL == "https://fapi.binance.com"
+
+
+@patch("exchanges.binance.requests.get")
+def test_binance_ping(mock_get):
+    """Test that BinanceExchange sends a request to the Binance ping endpoint."""
+    mock_response = mock_get.return_value
+    mock_response.raise_for_status.return_value = None
+
+    exchange_client = BinanceExchange()
+
+    result = exchange_client.ping()
+
+    assert result is True
+
+    mock_get.assert_called_once_with(
+        "https://fapi.binance.com/fapi/v1/ping",
+        timeout=10,
+    )
+
+    mock_response.raise_for_status.assert_called_once_with()
+    
