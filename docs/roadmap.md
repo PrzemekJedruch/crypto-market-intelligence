@@ -6,7 +6,7 @@
 |---|---|---:|
 | 1. Core Data Models | ✅ DONE | 100% |
 | 2. Exchange Interface | ✅ DONE | 100% |
-| 3. Binance Integration | 🟡 **IN PROGRESS** | 0% |
+| 3. Binance Integration | 🟡 **IN PROGRESS** | 12% |
 | 4. Database Layer | ⬜ TODO | 0% |
 | 5. Historical Synchronization | ⬜ TODO | 0% |
 | 6. Data Quality | ⬜ TODO | 0% |
@@ -33,10 +33,10 @@
 
 - [x] Complete Phase 1 — Core Data Models
 - [x] Complete Phase 2 — Exchange Interface
+- [x] Connect to Binance public API
 
 ### Next Tasks
 
-- [ ] Connect to Binance public API
 - [ ] Download candles
 - [ ] Download trades
 - [ ] Download Open Interest
@@ -148,7 +148,7 @@ Symbol: BTCUSDT
 
 ### Tasks
 
-- [ ] Connect to Binance public API
+- [x] Connect to Binance public API
 - [ ] Download candles
 - [ ] Download trades
 - [ ] Download Open Interest
