@@ -6,7 +6,7 @@
 |---|---|---:|
 | 1. Core Data Models | ✅ DONE | 100% |
 | 2. Exchange Interface | ✅ DONE | 100% |
-| 3. Binance Integration | ⬜ TODO | 0% |
+| 3. Binance Integration | 🟡 **IN PROGRESS** | 0% |
 | 4. Database Layer | ⬜ TODO | 0% |
 | 5. Historical Synchronization | ⬜ TODO | 0% |
 | 6. Data Quality | ⬜ TODO | 0% |
@@ -25,26 +25,25 @@
 
 ## Current Focus
 
-**Current Phase:** Phase 2 — Exchange Interface
-**Status:** ✅ DONE  
-**Next Milestone:**  Define the BaseExchange contract.
+**Current Phase:** Phase 3 — Binance Integration
+
+**Status:** 🟡 **IN PROGRESS**  
+**Next Milestone:**  Implement the first real market data source.
 ### Completed Recently
 
 - [x] Complete Phase 1 — Core Data Models
-- [x] Create `BaseExchange`
-- [x] Define `get_candles()`
-- [x] Define `get_trades()`
-- [x] Define `get_open_interest()`
-- [x] Define `get_funding_rate()`
-- [x] Define `get_supported_symbols()`
-- [x] Standardize timestamps
-- [x] Standardize symbol handling
-- [x] Standardize returned models
 - [x] Complete Phase 2 — Exchange Interface
 
 ### Next Tasks
 
-- [ ] Phase 3 — Binance Integration
+- [ ] Connect to Binance public API
+- [ ] Download candles
+- [ ] Download trades
+- [ ] Download Open Interest
+- [ ] Download funding rates
+- [ ] Convert Binance responses into internal models
+- [ ] Add basic error handling
+- [ ] Add request limits and pagination handling
 
 
 ## Status Legend
@@ -64,7 +63,6 @@ Advanced analytics, market scanning, backtesting, and machine learning will be a
 ---
 
 ## Phase 1 — Core Data Models
-
 **Status:** ✅ **DONE**
 
 ### Goal
@@ -134,7 +132,7 @@ Every supported exchange can be used through the same interface.
 
 ## Phase 3 — Binance Integration
 
-**Status:** ⬜ TODO
+**Status:** 🟡 **IN PROGRESS**
 
 ### Goal
 
