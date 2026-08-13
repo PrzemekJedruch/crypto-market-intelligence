@@ -437,7 +437,7 @@ Historical Open Interest data is downloaded from:
 GET /futures/data/openInterestHist
 ```
 
-Current project method:
+Raw download helper:
 
 ```python
 BinanceExchange._get_open_interest_raw()
@@ -445,31 +445,70 @@ BinanceExchange._get_open_interest_raw()
 
 This method returns the raw Binance response.
 
-The future public method:
+Public normalization method:
 
 ```python
 BinanceExchange.get_open_interest()
 ```
 
-will convert the response into normalized internal `OpenInterest` models.
+`get_open_interest()` is implemented and converts the raw Binance response into normalized internal `OpenInterest` models.
 
 ### Request Parameters
 
-Currently used parameters:
+Currently supported raw-request parameters:
 
 ```text
 symbol
 period
 limit
+startTime
+endTime
 ```
+
+The Python helper uses `start_time` and `end_time`, which are sent to Binance as `startTime` and `endTime`.
 
 Example:
 
 ```text
-symbol = BTCUSDT
-period = 5m
-limit  = 5
+symbol    = BTCUSDT
+period    = 5m
+limit     = 5
+startTime = 1786637160000
+endTime   = 1786637460000
 ```
+
+`startTime` and `endTime` are optional Unix timestamps in milliseconds.
+
+### Open Interest Time Range Handling
+
+The public `get_open_interest()` method accepts timezone-aware Python `datetime` values:
+
+```text
+start_time
+end_time
+```
+
+Before the API request:
+
+```text
+datetime
+    ↓
+_normalize_timestamp()
+    ↓
+UTC datetime
+    ↓
+Unix timestamp in milliseconds
+    ↓
+startTime / endTime
+```
+
+The current public implementation requests historical Open Interest with:
+
+```text
+period = 5m
+```
+
+because the `BaseExchange.get_open_interest()` contract does not currently expose a period argument.
 
 ### Raw Binance Open Interest Structure
 
@@ -516,7 +555,7 @@ consecutive timestamps are separated by:
 
 ### Open Interest Mapping
 
-Planned mapping:
+Implemented mapping:
 
 ```text
 Binance                     Internal OpenInterest
@@ -837,6 +876,8 @@ Current mocked tests cover:
 - trade requests with `startTime` and `endTime`,
 - normalized `Trade` model conversion through `get_trades()`,
 - raw Open Interest requests,
+- Open Interest requests with `startTime` and `endTime`,
+- normalized `OpenInterest` model conversion through `get_open_interest()`,
 - raw funding-rate requests.
 
 Live API checks are performed separately when validating the integration.
@@ -864,7 +905,7 @@ Current Binance integration progress:
 [ ] Convert Binance responses into internal models
     [x] Candles
     [x] Trades
-    [ ] Open Interest
+    [x] Open Interest
     [ ] Funding rates
 [ ] Add basic error handling
 [ ] Add request limits and pagination handling

@@ -6,6 +6,7 @@ import pytest
 from exchanges.binance import BinanceExchange
 from unittest.mock import patch
 from enums.market_type import MarketType
+from models.open_interest import OpenInterest
 
 
 def test_base_exchange_creation():
@@ -355,7 +356,7 @@ def test_get_candles_returns_normalized_models():
         )
 
         mock_get_candles_raw.assert_called_once_with(
-            symbol="btcusdt",
+            symbol="BTCUSDT",
             interval="1m",
             start_time=int(start_time.timestamp() * 1000),
             end_time=int(end_time.timestamp() * 1000),
@@ -458,6 +459,107 @@ def test_get_trades_returns_normalized_models():
 
         mock_get_trades_raw.assert_called_once_with(
             symbol="BTCUSDT",
+            start_time=int(start_time.timestamp() * 1000),
+            end_time=int(end_time.timestamp() * 1000),
+        )
+
+def test_get_open_interest_raw_with_time_range():
+    """Test that BinanceExchange includes start and end times in Open Interest requests."""
+    raw_open_interest = []
+
+    with patch("exchanges.binance.requests.get") as mock_get:
+        mock_response = mock_get.return_value
+        mock_response.json.return_value = raw_open_interest
+        mock_response.raise_for_status.return_value = None
+
+        exchange_client = BinanceExchange()
+
+        result = exchange_client._get_open_interest_raw(
+            symbol="btcusdt",
+            period="5m",
+            limit=5,
+            start_time=1786637160000,
+            end_time=1786637460000,
+        )
+
+        assert result == raw_open_interest
+
+        mock_get.assert_called_once_with(
+            "https://fapi.binance.com/futures/data/openInterestHist",
+            params={
+                "symbol": "BTCUSDT",
+                "period": "5m",
+                "limit": 5,
+                "startTime": 1786637160000,
+                "endTime": 1786637460000,
+            },
+            timeout=10,
+        )
+
+        mock_response.raise_for_status.assert_called_once_with()
+        mock_response.json.assert_called_once_with()
+
+def test_get_open_interest_returns_normalized_models():
+    """Test that BinanceExchange converts raw Open Interest into models."""
+    raw_open_interest = [
+        {
+            "symbol": "BTCUSDT",
+            "sumOpenInterest": "109816.19100000",
+            "sumOpenInterestValue": "6921956114.35020000",
+            "CMCCirculatingSupply": "20069371.00000000",
+            "timestamp": 1786640100000,
+        }
+    ]
+
+    with patch.object(
+        BinanceExchange,
+        "_get_open_interest_raw",
+        return_value=raw_open_interest,
+    ) as mock_get_open_interest_raw:
+        exchange_client = BinanceExchange()
+
+        start_time = datetime(
+            2026,
+            8,
+            13,
+            10,
+            0,
+            tzinfo=timezone.utc,
+        )
+        end_time = datetime(
+            2026,
+            8,
+            13,
+            11,
+            0,
+            tzinfo=timezone.utc,
+        )
+
+        result = exchange_client.get_open_interest(
+            symbol="btcusdt",
+            market_type=MarketType.PERPETUAL,
+            start_time=start_time,
+            end_time=end_time,
+        )
+
+        assert len(result) == 1
+
+        open_interest = result[0]
+
+        assert isinstance(open_interest, OpenInterest)
+        assert open_interest.exchange == Exchange.BINANCE
+        assert open_interest.market_type == MarketType.PERPETUAL
+        assert open_interest.symbol == "BTCUSDT"
+        assert open_interest.open_interest == 109816.191
+        assert open_interest.open_interest_usd == 6921956114.3502
+        assert open_interest.timestamp == datetime.fromtimestamp(
+            1786640100000 / 1000,
+            tz=timezone.utc,
+        )
+
+        mock_get_open_interest_raw.assert_called_once_with(
+            symbol="BTCUSDT",
+            period="5m",
             start_time=int(start_time.timestamp() * 1000),
             end_time=int(end_time.timestamp() * 1000),
         )

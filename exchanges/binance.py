@@ -1,18 +1,14 @@
-from urllib import response
+from datetime import datetime, timezone
 
 import requests
 
 from enums.exchange import Exchange
-from exchanges.base_exchange import BaseExchange
-
-from datetime import datetime, timezone
-
 from enums.market_type import MarketType
-from models.candle import Candle
-
 from enums.trade_side import TradeSide
+from exchanges.base_exchange import BaseExchange
+from models.candle import Candle
 from models.trade import Trade
-
+from models.open_interest import OpenInterest
 
 class BinanceExchange(BaseExchange):
     """Client for Binance USD-M Futures public market data API."""
@@ -66,6 +62,45 @@ class BinanceExchange(BaseExchange):
         response.raise_for_status()
 
         return response.json()
+
+    def get_candles(
+        self,
+        symbol: str,
+        market_type: MarketType,
+        interval: str,
+        start_time: datetime,
+        end_time: datetime,
+    ) -> list[Candle]:
+        """Return normalized candle data for the requested time range."""
+        normalized_start = self._normalize_timestamp(start_time)
+        normalized_end = self._normalize_timestamp(end_time)
+        normalized_symbol = self._normalize_symbol(symbol)
+
+        raw_candles = self._get_candles_raw(
+            symbol=normalized_symbol,
+            interval=interval,
+            start_time=int(normalized_start.timestamp() * 1000),
+            end_time=int(normalized_end.timestamp() * 1000),
+        )
+
+        return [
+            Candle(
+                exchange=self.exchange,
+                market_type=market_type,
+                symbol=normalized_symbol,
+                timestamp=datetime.fromtimestamp(
+                    candle[0] / 1000,
+                    tz=timezone.utc,
+                ),
+                interval=interval,
+                open=float(candle[1]),
+                high=float(candle[2]),
+                low=float(candle[3]),
+                close=float(candle[4]),
+                volume=float(candle[5]),
+            )
+            for candle in raw_candles
+        ]
 
     def _get_trades_raw(
         self,
@@ -139,23 +174,67 @@ class BinanceExchange(BaseExchange):
         symbol: str,
         period: str = "5m",
         limit: int = 30,
+        start_time: int | None = None,
+        end_time: int | None = None,
     ) -> list:
         """Download raw historical Open Interest data from Binance USD-M Futures."""
         normalized_symbol = self._normalize_symbol(symbol)
 
+        params = {
+            "symbol": normalized_symbol,
+            "period": period,
+            "limit": limit,
+        }
+
+        if start_time is not None:
+            params["startTime"] = start_time
+
+        if end_time is not None:
+            params["endTime"] = end_time
+
         response = requests.get(
             f"{self.BASE_URL}/futures/data/openInterestHist",
-            params={
-                "symbol": normalized_symbol,
-                "period": period,
-                "limit": limit,
-            },
+            params=params,
             timeout=10,
         )
 
         response.raise_for_status()
 
         return response.json()
+
+    def get_open_interest(
+        self,
+        symbol: str,
+        market_type: MarketType,
+        start_time: datetime,
+        end_time: datetime,
+    ) -> list[OpenInterest]:
+        """Return normalized Open Interest data for the requested time range."""
+        normalized_start = self._normalize_timestamp(start_time)
+        normalized_end = self._normalize_timestamp(end_time)
+        normalized_symbol = self._normalize_symbol(symbol)
+
+        raw_open_interest = self._get_open_interest_raw(
+            symbol=normalized_symbol,
+            period="5m",
+            start_time=int(normalized_start.timestamp() * 1000),
+            end_time=int(normalized_end.timestamp() * 1000),
+        )
+
+        return [
+            OpenInterest(
+                exchange=self.exchange,
+                market_type=market_type,
+                symbol=normalized_symbol,
+                timestamp=datetime.fromtimestamp(
+                    record["timestamp"] / 1000,
+                    tz=timezone.utc,
+                ),
+                open_interest=float(record["sumOpenInterest"]),
+                open_interest_usd=float(record["sumOpenInterestValue"]),
+            )
+            for record in raw_open_interest
+        ]
 
     def _get_funding_rate_raw(
         self,

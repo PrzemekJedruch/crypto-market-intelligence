@@ -70,7 +70,6 @@ class BaseExchange:
     @staticmethod
     def _normalize_timestamp(timestamp: datetime) -> datetime:
         """Return a timezone-aware datetime normalized to UTC."""
-
         if timestamp.tzinfo is None:
             raise ValueError("Timestamp must be timezone-aware.")
 
@@ -94,41 +93,3 @@ class BaseExchange:
             raise ValueError("Symbol must contain only letters and numbers.")
 
         return normalized_symbol
-
-    def get_candles(
-        self,
-        symbol: str,
-        market_type: MarketType,
-        interval: str,
-        start_time: datetime,
-        end_time: datetime,
-    ) -> list[Candle]:
-        """Return normalized candle data for the requested time range."""
-        normalized_start = self._normalize_timestamp(start_time)
-        normalized_end = self._normalize_timestamp(end_time)
-
-        raw_candles = self._get_candles_raw(
-            symbol=symbol,
-            interval=interval,
-            start_time=int(normalized_start.timestamp() * 1000),
-            end_time=int(normalized_end.timestamp() * 1000),
-        )
-
-        return [
-            Candle(
-                exchange=self.exchange,
-                market_type=market_type,
-                symbol=self._normalize_symbol(symbol),
-                timestamp=datetime.fromtimestamp(
-                    candle[0] / 1000,
-                    tz=timezone.utc,
-                ),
-                interval=interval,
-                open=float(candle[1]),
-                high=float(candle[2]),
-                low=float(candle[3]),
-                close=float(candle[4]),
-                volume=float(candle[5]),
-            )
-            for candle in raw_candles
-        ]
