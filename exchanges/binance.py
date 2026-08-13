@@ -93,3 +93,24 @@ class BinanceExchange(BaseExchange):
         response.raise_for_status()
 
         return response.json()
+
+    def _get_funding_rate_raw(
+        self,
+        symbol: str,
+        limit: int = 100,
+    ) -> list:
+        """Download raw historical funding rate data from Binance USD-M Futures."""
+        normalized_symbol = self._normalize_symbol(symbol)
+
+        response = requests.get(
+            f"{self.BASE_URL}/fapi/v1/fundingRate",
+            params={
+                "symbol": normalized_symbol,
+                "limit": limit,
+            },
+            timeout=10,
+        )
+
+        response.raise_for_status()
+
+        return response.json()

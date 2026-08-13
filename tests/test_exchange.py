@@ -214,3 +214,40 @@ def test_get_open_interest_raw():
 
         mock_response.raise_for_status.assert_called_once_with()
         mock_response.json.assert_called_once_with()
+
+def test_get_funding_rate_raw():
+    """Test that BinanceExchange requests raw funding rate data correctly."""
+    raw_funding_rates = [
+        {
+            "symbol": "BTCUSDT",
+            "fundingTime": 1786646400000,
+            "fundingRate": "0.00010000",
+            "markPrice": "63125.40",
+        }
+    ]
+
+    with patch("exchanges.binance.requests.get") as mock_get:
+        mock_response = mock_get.return_value
+        mock_response.json.return_value = raw_funding_rates
+        mock_response.raise_for_status.return_value = None
+
+        exchange_client = BinanceExchange()
+
+        result = exchange_client._get_funding_rate_raw(
+            symbol="btcusdt",
+            limit=5,
+        )
+
+        assert result == raw_funding_rates
+
+        mock_get.assert_called_once_with(
+            "https://fapi.binance.com/fapi/v1/fundingRate",
+            params={
+                "symbol": "BTCUSDT",
+                "limit": 5,
+            },
+            timeout=10,
+        )
+
+        mock_response.raise_for_status.assert_called_once_with()
+        mock_response.json.assert_called_once_with()

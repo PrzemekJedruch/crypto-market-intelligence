@@ -37,11 +37,11 @@
 - [x] Download candles
 - [x] Download trades
 - [x] Download Open Interest
+- [x] Download funding rates
 
 ### Next Tasks
 
 
-- [ ] Download funding rates
 - [ ] Convert Binance responses into internal models
 - [ ] Add basic error handling
 - [ ] Add request limits and pagination handling
@@ -153,7 +153,7 @@ Symbol: BTCUSDT
 - [x] Download candles
 - [x] Download trades
 - [x] Download Open Interest
-- [ ] Download funding rates
+- [x] Download funding rates
 - [ ] Convert Binance responses into internal models
 - [ ] Add basic error handling
 - [ ] Add request limits and pagination handling

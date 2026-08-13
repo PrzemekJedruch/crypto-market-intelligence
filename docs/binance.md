@@ -474,6 +474,140 @@ timestamp            -> timezone-aware UTC datetime
 
 ---
 
+## Funding Rates
+
+### Endpoint
+
+Historical funding-rate data is downloaded from:
+
+```text
+GET /fapi/v1/fundingRate
+```
+
+Current project method:
+
+```python
+BinanceExchange._get_funding_rate_raw()
+```
+
+This method returns the raw Binance response.
+
+The future public method:
+
+```python
+BinanceExchange.get_funding_rate()
+```
+
+will convert the response into normalized internal `FundingRate` models.
+
+### Request Parameters
+
+Currently used parameters:
+
+```text
+symbol
+limit
+```
+
+Example:
+
+```text
+symbol = BTCUSDT
+limit  = 5
+```
+
+### Raw Binance Funding Rate Structure
+
+Example response record observed during live testing:
+
+```text
+{
+    "symbol": "BTCUSDT",
+    "fundingTime": 1786521600000,
+    "fundingRate": "0.00008568",
+    "markPrice": "63810.89568841",
+    "rateType": "Regular"
+}
+```
+
+Fields used by the project:
+
+```text
+symbol       -> market symbol
+fundingTime  -> historical funding event time in Unix milliseconds
+fundingRate  -> funding-rate value
+```
+
+Additional fields observed in the live response:
+
+```text
+markPrice
+rateType
+```
+
+The current internal `FundingRate` model does not store either field.
+
+`markPrice` may become useful later for analysis, but it is intentionally ignored for the initial normalized model.
+
+The live API response also returned:
+
+```text
+rateType = "Regular"
+```
+
+The current implementation does not depend on this field. It is documented as an observed Binance-specific response detail.
+
+### Funding Interval Observed During Live Testing
+
+The five downloaded BTCUSDT records were separated by:
+
+```text
+28800000 ms = 8 hours
+```
+
+This documents the interval observed in the live response used during development.
+
+The project should not assume that every possible funding event or instrument must always follow this exact interval without validating exchange behavior.
+
+### Funding Rate Mapping
+
+Planned mapping:
+
+```text
+Binance                     Internal FundingRate
+------------------------------------------------------
+symbol                   -> symbol
+fundingTime              -> timestamp
+fundingRate              -> funding_rate
+
+Exchange.BINANCE         -> exchange
+MarketType.PERPETUAL     -> market_type
+None                     -> next_funding_time
+```
+
+For historical funding-rate records, `fundingTime` represents the timestamp of the historical funding event.
+
+The current internal model also contains:
+
+```text
+next_funding_time
+```
+
+Because the historical endpoint returns past funding events rather than the next scheduled funding time, this field will initially be set to:
+
+```text
+None
+```
+
+Before creating `FundingRate`, values must be normalized:
+
+```text
+fundingTime -> timezone-aware UTC datetime
+fundingRate -> float
+```
+
+---
+
 ## Raw Data vs Internal Models
 
 The exchange layer is responsible for converting Binance-specific responses into project models.
@@ -532,6 +666,24 @@ list[OpenInterest]
 rest of the application
 ```
 
+### Funding Rate Flow
+
+```text
+Binance API
+    ↓
+_get_funding_rate_raw()
+    ↓
+raw Binance funding-rate response
+    ↓
+get_funding_rate()
+    ↓
+normalization and conversion
+    ↓
+list[FundingRate]
+    ↓
+rest of the application
+```
+
 The rest of the application should not depend on Binance positional arrays, short Binance response keys, or other Binance-specific response formats.
 
 This keeps collectors, repositories, services, analytics, and machine-learning code exchange-independent.
@@ -581,7 +733,8 @@ Current mocked tests cover:
 - API `ping`,
 - raw candle requests,
 - raw aggregate trade requests,
-- raw Open Interest requests.
+- raw Open Interest requests,
+- raw funding-rate requests.
 
 Live API checks are performed separately when validating the integration.
 
@@ -590,7 +743,8 @@ Live requests have been used to verify:
 - API connectivity,
 - five `BTCUSDT` one-minute candles,
 - five `BTCUSDT` aggregate trades,
-- five `BTCUSDT` Open Interest records with a `5m` period.
+- five `BTCUSDT` Open Interest records with a `5m` period,
+- five historical `BTCUSDT` funding-rate records.
 
 ---
 
@@ -603,7 +757,7 @@ Current Binance integration progress:
 [x] Download candles
 [x] Download trades
 [x] Download Open Interest
-[ ] Download funding rates
+[x] Download funding rates
 [ ] Convert Binance responses into internal models
 [ ] Add basic error handling
 [ ] Add request limits and pagination handling
@@ -617,7 +771,6 @@ This file should be expanded as Binance integration grows.
 
 Add documentation for:
 
-- funding-rate endpoint and response mapping,
 - request weights and rate limits,
 - pagination behavior,
 - supported intervals,
