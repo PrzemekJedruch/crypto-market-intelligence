@@ -1,4 +1,5 @@
 from enums.exchange import Exchange
+from enums.trade_side import TradeSide
 from exchanges.base_exchange import BaseExchange
 from datetime import datetime, timedelta, timezone
 import pytest
@@ -356,6 +357,107 @@ def test_get_candles_returns_normalized_models():
         mock_get_candles_raw.assert_called_once_with(
             symbol="btcusdt",
             interval="1m",
+            start_time=int(start_time.timestamp() * 1000),
+            end_time=int(end_time.timestamp() * 1000),
+        )
+def test_get_trades_raw_with_time_range():
+    """Test that BinanceExchange includes start and end times in trade requests."""
+    raw_trades = []
+
+    with patch("exchanges.binance.requests.get") as mock_get:
+        mock_response = mock_get.return_value
+        mock_response.json.return_value = raw_trades
+        mock_response.raise_for_status.return_value = None
+
+        exchange_client = BinanceExchange()
+
+        result = exchange_client._get_trades_raw(
+            symbol="btcusdt",
+            limit=5,
+            start_time=1786637160000,
+            end_time=1786637460000,
+        )
+
+        assert result == raw_trades
+
+        mock_get.assert_called_once_with(
+            "https://fapi.binance.com/fapi/v1/aggTrades",
+            params={
+                "symbol": "BTCUSDT",
+                "limit": 5,
+                "startTime": 1786637160000,
+                "endTime": 1786637460000,
+            },
+            timeout=10,
+        )
+
+        mock_response.raise_for_status.assert_called_once_with()
+        mock_response.json.assert_called_once_with()
+
+def test_get_trades_returns_normalized_models():
+    """Test that BinanceExchange converts raw trades into Trade models."""
+    raw_trades = [
+        {
+            "a": 12345,
+            "p": "63450.10",
+            "q": "0.125",
+            "f": 100,
+            "l": 101,
+            "T": 1786637160000,
+            "m": False,
+        }
+    ]
+
+    with patch.object(
+        BinanceExchange,
+        "_get_trades_raw",
+        return_value=raw_trades,
+    ) as mock_get_trades_raw:
+        exchange_client = BinanceExchange()
+
+        start_time = datetime(
+            2026,
+            8,
+            13,
+            10,
+            0,
+            tzinfo=timezone.utc,
+        )
+        end_time = datetime(
+            2026,
+            8,
+            13,
+            10,
+            30,
+            tzinfo=timezone.utc,
+        )
+
+        result = exchange_client.get_trades(
+            symbol="btcusdt",
+            market_type=MarketType.PERPETUAL,
+            start_time=start_time,
+            end_time=end_time,
+        )
+
+        assert len(result) == 1
+
+        trade = result[0]
+
+        assert trade.exchange == Exchange.BINANCE
+        assert trade.market_type == MarketType.PERPETUAL
+        assert trade.symbol == "BTCUSDT"
+        assert trade.trade_id == 12345
+        assert trade.price == 63450.10
+        assert trade.quantity == 0.125
+        assert trade.quote_value == 63450.10 * 0.125
+        assert trade.side == TradeSide.BUY
+        assert trade.timestamp == datetime.fromtimestamp(
+            1786637160000 / 1000,
+            tz=timezone.utc,
+        )
+
+        mock_get_trades_raw.assert_called_once_with(
+            symbol="BTCUSDT",
             start_time=int(start_time.timestamp() * 1000),
             end_time=int(end_time.timestamp() * 1000),
         )

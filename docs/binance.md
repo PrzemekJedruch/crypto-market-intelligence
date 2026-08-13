@@ -274,7 +274,7 @@ Raw aggregate trade data is downloaded from:
 GET /fapi/v1/aggTrades
 ```
 
-Current project method:
+Raw download helper:
 
 ```python
 BinanceExchange._get_trades_raw()
@@ -282,29 +282,62 @@ BinanceExchange._get_trades_raw()
 
 This method returns the raw Binance aggregate-trade response.
 
-The future public method:
+Public normalization method:
 
 ```python
 BinanceExchange.get_trades()
 ```
 
-will convert the raw response into normalized internal `Trade` models.
+`get_trades()` is implemented and converts the raw Binance response into normalized internal `Trade` models.
 
 ### Request Parameters
 
-Currently used parameters:
+Currently supported raw-request parameters:
 
 ```text
 symbol
 limit
+startTime
+endTime
 ```
+
+The Python helper uses `start_time` and `end_time`, which are sent to Binance as `startTime` and `endTime`.
 
 Example:
 
 ```text
-symbol = BTCUSDT
-limit  = 5
+symbol    = BTCUSDT
+limit     = 5
+startTime = 1786637160000
+endTime   = 1786637460000
 ```
+
+`startTime` and `endTime` are optional Unix timestamps in milliseconds.
+
+### Trade Time Range Handling
+
+The public `get_trades()` method accepts timezone-aware Python `datetime` values:
+
+```text
+start_time
+end_time
+```
+
+Before the API request:
+
+```text
+datetime
+    ↓
+_normalize_timestamp()
+    ↓
+UTC datetime
+    ↓
+Unix timestamp in milliseconds
+    ↓
+startTime / endTime
+```
+
+This keeps the internal interface based on Python `datetime` objects while isolating Binance's millisecond timestamp format inside the exchange client.
 
 ### Raw Binance Aggregate Trade Structure
 
@@ -363,7 +396,7 @@ seller is the taker/aggressor
 
 ### Trade Mapping
 
-Planned mapping:
+Implemented mapping:
 
 ```text
 Binance                 Internal Trade
@@ -535,19 +568,52 @@ will convert the response into normalized internal `FundingRate` models.
 
 ### Request Parameters
 
-Currently used parameters:
+Currently supported raw-request parameters:
 
 ```text
 symbol
 limit
+startTime
+endTime
 ```
+
+The Python helper uses `start_time` and `end_time`, which are sent to Binance as `startTime` and `endTime`.
 
 Example:
 
 ```text
-symbol = BTCUSDT
-limit  = 5
+symbol    = BTCUSDT
+limit     = 5
+startTime = 1786637160000
+endTime   = 1786637460000
 ```
+
+`startTime` and `endTime` are optional Unix timestamps in milliseconds.
+
+### Trade Time Range Handling
+
+The public `get_trades()` method accepts timezone-aware Python `datetime` values:
+
+```text
+start_time
+end_time
+```
+
+Before the API request:
+
+```text
+datetime
+    ↓
+_normalize_timestamp()
+    ↓
+UTC datetime
+    ↓
+Unix timestamp in milliseconds
+    ↓
+startTime / endTime
+```
+
+This keeps the internal interface based on Python `datetime` objects while isolating Binance's millisecond timestamp format inside the exchange client.
 
 ### Raw Binance Funding Rate Structure
 
@@ -768,6 +834,8 @@ Current mocked tests cover:
 - candle requests with `startTime` and `endTime`,
 - normalized `Candle` model conversion through `get_candles()`,
 - raw aggregate trade requests,
+- trade requests with `startTime` and `endTime`,
+- normalized `Trade` model conversion through `get_trades()`,
 - raw Open Interest requests,
 - raw funding-rate requests.
 
@@ -795,7 +863,7 @@ Current Binance integration progress:
 [x] Download funding rates
 [ ] Convert Binance responses into internal models
     [x] Candles
-    [ ] Trades
+    [x] Trades
     [ ] Open Interest
     [ ] Funding rates
 [ ] Add basic error handling
