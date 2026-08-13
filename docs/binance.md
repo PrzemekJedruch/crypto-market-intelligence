@@ -50,6 +50,8 @@ A successful request returns `True`.
 
 Unit tests mock the HTTP request so that the test suite does not depend on an active internet connection or Binance availability.
 
+Live connectivity has also been verified manually against the Binance public API.
+
 ## Internal Symbol Format
 
 The project uses normalized symbols in uppercase alphanumeric format without separators.
@@ -98,6 +100,8 @@ UTC datetime
 
 Naive Python `datetime` values without timezone information are rejected by `BaseExchange`.
 
+---
+
 ## Candles
 
 ### Endpoint
@@ -114,7 +118,7 @@ Current project method:
 BinanceExchange._get_candles_raw()
 ```
 
-The leading underscore indicates that this is an internal helper method. It returns the raw Binance response and is not intended to be used by the rest of the application.
+The leading underscore indicates that this is an internal helper method. It returns the raw Binance response and is not intended to be used directly by the rest of the application.
 
 The future public method:
 
@@ -182,17 +186,17 @@ Field positions:
 [11] Ignore
 ```
 
-Important implementation detail:
+Important implementation details:
 
 - timestamps are numeric Unix milliseconds,
 - OHLC prices are returned as strings,
 - volume values are returned as strings,
 - number of trades is numeric,
-- the last field is currently not used by the project.
+- the final field is currently not used by the project.
 
-## Candle Mapping
+### Candle Mapping
 
-The first internal `Candle` model uses only part of the Binance response.
+The initial internal `Candle` model uses only part of the Binance response.
 
 ```text
 Binance response        Internal Candle
@@ -225,11 +229,256 @@ Fields such as quote volume, trade count, and taker-buy volume are not currently
 
 They may become useful later for feature engineering and can be added deliberately if the data model requires them.
 
+---
+
+## Trades
+
+### Endpoint
+
+Raw aggregate trade data is downloaded from:
+
+```text
+GET /fapi/v1/aggTrades
+```
+
+Current project method:
+
+```python
+BinanceExchange._get_trades_raw()
+```
+
+This method returns the raw Binance aggregate-trade response.
+
+The future public method:
+
+```python
+BinanceExchange.get_trades()
+```
+
+will convert the raw response into normalized internal `Trade` models.
+
+### Request Parameters
+
+Currently used parameters:
+
+```text
+symbol
+limit
+```
+
+Example:
+
+```text
+symbol = BTCUSDT
+limit  = 5
+```
+
+### Raw Binance Aggregate Trade Structure
+
+Example response record observed during live testing:
+
+```text
+{
+    "a": 3407848248,
+    "p": "62912.60",
+    "q": "0.113",
+    "nq": "0.113",
+    "f": 7970054172,
+    "l": 7970054174,
+    "T": 1786639477827,
+    "m": false
+}
+```
+
+Relevant fields:
+
+```text
+a  -> aggregate trade ID
+p  -> execution price
+q  -> quantity
+f  -> first underlying trade ID
+l  -> last underlying trade ID
+T  -> trade time in Unix milliseconds
+m  -> whether the buyer was the maker
+```
+
+An additional field was observed in the live response:
+
+```text
+nq
+```
+
+The project does not currently depend on `nq`. It should remain ignored unless its purpose is explicitly required by the internal data model.
+
+### Aggressor Side Mapping
+
+The internal `Trade.side` represents the aggressor/taker side.
+
+The Binance `m` field is interpreted as:
+
+```text
+m = False
+buyer is not the maker
+buyer is the taker/aggressor
+-> TradeSide.BUY
+
+m = True
+buyer is the maker
+seller is the taker/aggressor
+-> TradeSide.SELL
+```
+
+### Trade Mapping
+
+Planned mapping:
+
+```text
+Binance                 Internal Trade
+------------------------------------------------
+a                    -> trade_id
+p                    -> price
+q                    -> quantity
+p * q                -> quote_value
+T                    -> timestamp
+m=False              -> TradeSide.BUY
+m=True               -> TradeSide.SELL
+
+Exchange.BINANCE     -> exchange
+MarketType.PERPETUAL -> market_type
+requested symbol     -> symbol
+```
+
+Before creating `Trade`, values must be normalized:
+
+```text
+trade_id    -> int
+price       -> float
+quantity    -> float
+quote_value -> float
+timestamp   -> timezone-aware UTC datetime
+side        -> TradeSide
+```
+
+---
+
+## Open Interest
+
+### Endpoint
+
+Historical Open Interest data is downloaded from:
+
+```text
+GET /futures/data/openInterestHist
+```
+
+Current project method:
+
+```python
+BinanceExchange._get_open_interest_raw()
+```
+
+This method returns the raw Binance response.
+
+The future public method:
+
+```python
+BinanceExchange.get_open_interest()
+```
+
+will convert the response into normalized internal `OpenInterest` models.
+
+### Request Parameters
+
+Currently used parameters:
+
+```text
+symbol
+period
+limit
+```
+
+Example:
+
+```text
+symbol = BTCUSDT
+period = 5m
+limit  = 5
+```
+
+### Raw Binance Open Interest Structure
+
+Example response record observed during live testing:
+
+```text
+{
+    "symbol": "BTCUSDT",
+    "sumOpenInterest": "109816.19100000",
+    "sumOpenInterestValue": "6921956114.35020000",
+    "CMCCirculatingSupply": "20069371.00000000",
+    "timestamp": 1786640100000
+}
+```
+
+Fields used by the project:
+
+```text
+symbol                 -> market symbol
+sumOpenInterest        -> total Open Interest
+sumOpenInterestValue   -> Open Interest value
+timestamp              -> Unix timestamp in milliseconds
+```
+
+Additional field returned by the endpoint:
+
+```text
+CMCCirculatingSupply
+```
+
+This field is not currently stored in the internal `OpenInterest` model.
+
+For:
+
+```text
+period = 5m
+```
+
+consecutive timestamps are separated by:
+
+```text
+300000 ms = 5 minutes
+```
+
+### Open Interest Mapping
+
+Planned mapping:
+
+```text
+Binance                     Internal OpenInterest
+------------------------------------------------------
+symbol                   -> symbol
+sumOpenInterest          -> open_interest
+sumOpenInterestValue     -> open_interest_usd
+timestamp                -> timestamp
+
+Exchange.BINANCE         -> exchange
+MarketType.PERPETUAL     -> market_type
+```
+
+Before creating `OpenInterest`, values must be normalized:
+
+```text
+sumOpenInterest      -> float
+sumOpenInterestValue -> float
+timestamp            -> timezone-aware UTC datetime
+```
+
+---
+
 ## Raw Data vs Internal Models
 
 The exchange layer is responsible for converting Binance-specific responses into project models.
 
-Expected candle flow:
+### Candle Flow
 
 ```text
 Binance API
@@ -247,7 +496,7 @@ list[Candle]
 rest of the application
 ```
 
-Expected trade flow:
+### Trade Flow
 
 ```text
 Binance API
@@ -265,9 +514,29 @@ list[Trade]
 rest of the application
 ```
 
-The rest of the application should not depend on Binance positional arrays or Binance-specific response formats.
+### Open Interest Flow
+
+```text
+Binance API
+    ↓
+_get_open_interest_raw()
+    ↓
+raw Binance Open Interest response
+    ↓
+get_open_interest()
+    ↓
+normalization and conversion
+    ↓
+list[OpenInterest]
+    ↓
+rest of the application
+```
+
+The rest of the application should not depend on Binance positional arrays, short Binance response keys, or other Binance-specific response formats.
 
 This keeps collectors, repositories, services, analytics, and machine-learning code exchange-independent.
+
+---
 
 ## HTTP Request Rules
 
@@ -287,11 +556,13 @@ This ensures HTTP errors are raised instead of being silently treated as valid m
 
 More complete error handling will be added later in Phase 3.
 
+---
+
 ## Testing Strategy
 
 HTTP unit tests use `unittest.mock.patch`.
 
-Example concept:
+Example:
 
 ```text
 @patch("exchanges.binance.requests.get")
@@ -305,7 +576,23 @@ The unit tests therefore verify project behavior without requiring:
 - Binance availability,
 - live API responses.
 
+Current mocked tests cover:
+
+- API `ping`,
+- raw candle requests,
+- raw aggregate trade requests,
+- raw Open Interest requests.
+
 Live API checks are performed separately when validating the integration.
+
+Live requests have been used to verify:
+
+- API connectivity,
+- five `BTCUSDT` one-minute candles,
+- five `BTCUSDT` aggregate trades,
+- five `BTCUSDT` Open Interest records with a `5m` period.
+
+---
 
 ## Phase 3 Progress
 
@@ -315,12 +602,14 @@ Current Binance integration progress:
 [x] Connect to Binance public API
 [x] Download candles
 [x] Download trades
-[ ] Download Open Interest
+[x] Download Open Interest
 [ ] Download funding rates
 [ ] Convert Binance responses into internal models
 [ ] Add basic error handling
 [ ] Add request limits and pagination handling
 ```
+
+---
 
 ## Future Documentation Updates
 
@@ -328,7 +617,6 @@ This file should be expanded as Binance integration grows.
 
 Add documentation for:
 
-- Open Interest endpoint and response mapping,
 - funding-rate endpoint and response mapping,
 - request weights and rate limits,
 - pagination behavior,
@@ -340,6 +628,8 @@ Add documentation for:
 - historical synchronization behavior,
 - WebSocket market data,
 - any Binance-specific edge cases discovered during development.
+
+---
 
 ## Design Rule
 

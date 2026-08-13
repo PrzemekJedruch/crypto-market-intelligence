@@ -6,7 +6,7 @@
 |---|---|---:|
 | 1. Core Data Models | ✅ DONE | 100% |
 | 2. Exchange Interface | ✅ DONE | 100% |
-| 3. Binance Integration | 🟡 **IN PROGRESS** | 12% |
+| 3. Binance Integration | 🟡 **IN PROGRESS** | 50% |
 | 4. Database Layer | ⬜ TODO | 0% |
 | 5. Historical Synchronization | ⬜ TODO | 0% |
 | 6. Data Quality | ⬜ TODO | 0% |
@@ -36,10 +36,11 @@
 - [x] Connect to Binance public API
 - [x] Download candles
 - [x] Download trades
+- [x] Download Open Interest
 
 ### Next Tasks
 
-- [ ] Download Open Interest
+
 - [ ] Download funding rates
 - [ ] Convert Binance responses into internal models
 - [ ] Add basic error handling
@@ -151,7 +152,7 @@ Symbol: BTCUSDT
 - [x] Connect to Binance public API
 - [x] Download candles
 - [x] Download trades
-- [ ] Download Open Interest
+- [x] Download Open Interest
 - [ ] Download funding rates
 - [ ] Convert Binance responses into internal models
 - [ ] Add basic error handling

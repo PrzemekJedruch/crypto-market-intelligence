@@ -175,3 +175,42 @@ def test_get_trades_raw():
 
         mock_response.raise_for_status.assert_called_once_with()
         mock_response.json.assert_called_once_with()
+
+def test_get_open_interest_raw():
+    """Test that BinanceExchange requests raw Open Interest data correctly."""
+    raw_open_interest = [
+        {
+            "symbol": "BTCUSDT",
+            "sumOpenInterest": "12345.67",
+            "sumOpenInterestValue": "987654321.00",
+            "timestamp": 1786639477827,
+        }
+    ]
+
+    with patch("exchanges.binance.requests.get") as mock_get:
+        mock_response = mock_get.return_value
+        mock_response.json.return_value = raw_open_interest
+        mock_response.raise_for_status.return_value = None
+
+        exchange_client = BinanceExchange()
+
+        result = exchange_client._get_open_interest_raw(
+            symbol="btcusdt",
+            period="5m",
+            limit=5,
+        )
+
+        assert result == raw_open_interest
+
+        mock_get.assert_called_once_with(
+            "https://fapi.binance.com/futures/data/openInterestHist",
+            params={
+                "symbol": "BTCUSDT",
+                "period": "5m",
+                "limit": 5,
+            },
+            timeout=10,
+        )
+
+        mock_response.raise_for_status.assert_called_once_with()
+        mock_response.json.assert_called_once_with()

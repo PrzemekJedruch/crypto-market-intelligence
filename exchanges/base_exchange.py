@@ -14,7 +14,7 @@ class BaseExchange:
     All timestamps passed to and returned by exchange clients must use UTC.
     Market data methods must return normalized internal models, not raw API responses.
     """
-    
+
     def __init__(self, exchange: Exchange):
         """Initialize the exchange client."""
         self.exchange = exchange
@@ -94,5 +94,3 @@ class BaseExchange:
             raise ValueError("Symbol must contain only letters and numbers.")
 
         return normalized_symbol
-
-    
