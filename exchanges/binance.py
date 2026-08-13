@@ -11,6 +11,11 @@ from models.trade import Trade
 from models.open_interest import OpenInterest
 from models.funding_rate import FundingRate
 
+
+class BinanceAPIError(Exception):
+    """Raised when a Binance API request fails."""
+
+
 class BinanceExchange(BaseExchange):
     """Client for Binance USD-M Futures public market data API."""
 
@@ -20,15 +25,28 @@ class BinanceExchange(BaseExchange):
         """Initialize the Binance exchange client."""
         super().__init__(exchange=Exchange.BINANCE)
 
+    def _get_json(
+        self,
+        endpoint: str,
+        params: dict | None = None,
+    ) -> list | dict:
+        """Send a GET request to Binance and return the decoded JSON response."""
+        try:
+            response = requests.get(
+                f"{self.BASE_URL}{endpoint}",
+                params=params,
+                timeout=10,
+            )
+            response.raise_for_status()
+
+            return response.json()
+
+        except requests.RequestException as error:
+            raise BinanceAPIError(f"Binance API request failed: {error}") from error
+
     def ping(self) -> bool:
         """Check whether the Binance Futures API is reachable."""
-        response = requests.get(
-            f"{self.BASE_URL}/fapi/v1/ping",
-            timeout=10,
-        )
-
-        response.raise_for_status()
-
+        self._get_json("/fapi/v1/ping")
         return True
 
     def _get_candles_raw(
@@ -54,15 +72,10 @@ class BinanceExchange(BaseExchange):
         if end_time is not None:
             params["endTime"] = end_time
 
-        response = requests.get(
-            f"{self.BASE_URL}/fapi/v1/klines",
+        return self._get_json(
+            endpoint="/fapi/v1/klines",
             params=params,
-            timeout=10,
         )
-
-        response.raise_for_status()
-
-        return response.json()
 
     def get_candles(
         self,
@@ -124,15 +137,10 @@ class BinanceExchange(BaseExchange):
         if end_time is not None:
             params["endTime"] = end_time
 
-        response = requests.get(
-            f"{self.BASE_URL}/fapi/v1/aggTrades",
+        return self._get_json(
+            endpoint="/fapi/v1/aggTrades",
             params=params,
-            timeout=10,
         )
-
-        response.raise_for_status()
-
-        return response.json()
 
     def get_trades(
         self,
@@ -193,15 +201,10 @@ class BinanceExchange(BaseExchange):
         if end_time is not None:
             params["endTime"] = end_time
 
-        response = requests.get(
-            f"{self.BASE_URL}/futures/data/openInterestHist",
+        return self._get_json(
+            endpoint="/futures/data/openInterestHist",
             params=params,
-            timeout=10,
         )
-
-        response.raise_for_status()
-
-        return response.json()
 
     def get_open_interest(
         self,
@@ -258,15 +261,10 @@ class BinanceExchange(BaseExchange):
         if end_time is not None:
             params["endTime"] = end_time
 
-        response = requests.get(
-            f"{self.BASE_URL}/fapi/v1/fundingRate",
+        return self._get_json(
+            endpoint="/fapi/v1/fundingRate",
             params=params,
-            timeout=10,
         )
-
-        response.raise_for_status()
-
-        return response.json()
 
     def get_funding_rate(
         self,

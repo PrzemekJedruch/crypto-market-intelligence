@@ -1,9 +1,11 @@
+import requests
+
 from enums.exchange import Exchange
 from enums.trade_side import TradeSide
 from exchanges.base_exchange import BaseExchange
 from datetime import datetime, timedelta, timezone
 import pytest
-from exchanges.binance import BinanceExchange
+from exchanges.binance import BinanceAPIError, BinanceExchange
 from unittest.mock import patch
 from enums.market_type import MarketType
 from models.open_interest import OpenInterest
@@ -92,6 +94,7 @@ def test_binance_ping(mock_get):
 
     mock_get.assert_called_once_with(
         "https://fapi.binance.com/fapi/v1/ping",
+        params=None,
         timeout=10,
     )
 
@@ -660,3 +663,16 @@ def test_get_funding_rate_returns_normalized_models():
             start_time=int(start_time.timestamp() * 1000),
             end_time=int(end_time.timestamp() * 1000),
         )
+
+def test_get_json_raises_binance_api_error_on_request_failure():
+    """Test that request errors are converted into BinanceAPIError."""
+    with patch("exchanges.binance.requests.get") as mock_get:
+        mock_get.side_effect = requests.RequestException("Connection failed")
+
+        exchange_client = BinanceExchange()
+
+        with pytest.raises(
+            BinanceAPIError,
+            match="Binance API request failed",
+        ):
+            exchange_client._get_json("/fapi/v1/ping")

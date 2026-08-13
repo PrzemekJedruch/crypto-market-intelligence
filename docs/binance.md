@@ -836,15 +836,79 @@ Current Binance requests use:
 timeout = 10 seconds
 ```
 
-Responses must be validated with:
+All public HTTP GET requests are routed through the shared helper:
 
 ```python
-response.raise_for_status()
+BinanceExchange._get_json()
 ```
 
-This ensures HTTP errors are raised instead of being silently treated as valid market data.
+The helper:
 
-More complete error handling will be added later in Phase 3.
+1. builds the full Binance URL from `BASE_URL` and the endpoint,
+2. sends the request with `requests.get()`,
+3. validates the response with `response.raise_for_status()`,
+4. decodes and returns the JSON response,
+5. converts `requests.RequestException` failures into `BinanceAPIError`.
+
+The current request flow is:
+
+```text
+ping() / raw market-data method
+        ↓
+_get_json()
+        ↓
+requests.get()
+        ↓
+response.raise_for_status()
+        ↓
+response.json()
+```
+
+If a request or HTTP failure occurs:
+
+```text
+requests.RequestException
+        ↓
+BinanceAPIError
+```
+
+### Binance API Error
+
+The Binance exchange layer defines a dedicated exception:
+
+```python
+class BinanceAPIError(Exception):
+    """Raised when a Binance API request fails."""
+```
+
+The exception is intentionally lightweight. Its purpose is to expose a Binance-specific error type to the rest of the application instead of leaking low-level `requests` exceptions directly.
+
+Current error conversion:
+
+```python
+except requests.RequestException as error:
+    raise BinanceAPIError(
+        f"Binance API request failed: {error}"
+    ) from error
+```
+
+Using `from error` preserves the original exception as the cause, which is useful for debugging while still presenting a stable exchange-specific exception type to callers.
+
+### Shared Request Helper
+
+The following Binance operations now use `_get_json()`:
+
+```text
+ping()
+_get_candles_raw()
+_get_trades_raw()
+_get_open_interest_raw()
+_get_funding_rate_raw()
+```
+
+This centralizes basic request handling and avoids duplicating the same `requests.get()`, timeout, status validation, JSON decoding, and exception conversion logic in every endpoint method.
+
+Retries, backoff, rate-limit handling, and more detailed Binance error payload parsing are intentionally left for later stages.
 
 ---
 
@@ -880,7 +944,10 @@ Current mocked tests cover:
 - normalized `OpenInterest` model conversion through `get_open_interest()`,
 - raw funding-rate requests,
 - funding-rate requests with `startTime` and `endTime`,
-- normalized `FundingRate` model conversion through `get_funding_rate()`.
+- normalized `FundingRate` model conversion through `get_funding_rate()`,
+- conversion of `requests.RequestException` into `BinanceAPIError`.
+
+The `ping()` test also reflects the shared request helper behavior, including the explicit `params=None` argument passed by `_get_json()`.
 
 Live API checks are performed separately when validating the integration.
 
@@ -909,7 +976,7 @@ Current Binance integration progress:
     [x] Trades
     [x] Open Interest
     [x] Funding rates
-[ ] Add basic error handling
+[x] Add basic error handling
 [ ] Add request limits and pagination handling
 ```
 
@@ -924,8 +991,8 @@ Add documentation for:
 - request weights and rate limits,
 - pagination behavior,
 - supported intervals,
-- API error responses,
-- retry strategy,
+- detailed Binance API error payloads,
+- retry and backoff strategy,
 - missing-data handling,
 - symbol discovery,
 - historical synchronization behavior,
