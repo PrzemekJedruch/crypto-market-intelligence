@@ -563,3 +563,100 @@ def test_get_open_interest_returns_normalized_models():
             start_time=int(start_time.timestamp() * 1000),
             end_time=int(end_time.timestamp() * 1000),
         )
+
+def test_get_funding_rate_raw_with_time_range():
+    """Test that BinanceExchange includes start and end times in funding-rate requests."""
+    raw_funding_rates = []
+
+    with patch("exchanges.binance.requests.get") as mock_get:
+        mock_response = mock_get.return_value
+        mock_response.json.return_value = raw_funding_rates
+        mock_response.raise_for_status.return_value = None
+
+        exchange_client = BinanceExchange()
+
+        result = exchange_client._get_funding_rate_raw(
+            symbol="btcusdt",
+            limit=5,
+            start_time=1786521600000,
+            end_time=1786636800000,
+        )
+
+        assert result == raw_funding_rates
+
+        mock_get.assert_called_once_with(
+            "https://fapi.binance.com/fapi/v1/fundingRate",
+            params={
+                "symbol": "BTCUSDT",
+                "limit": 5,
+                "startTime": 1786521600000,
+                "endTime": 1786636800000,
+            },
+            timeout=10,
+        )
+
+        mock_response.raise_for_status.assert_called_once_with()
+        mock_response.json.assert_called_once_with()
+
+def test_get_funding_rate_returns_normalized_models():
+    """Test that BinanceExchange converts raw funding rates into FundingRate models."""
+    raw_funding_rates = [
+        {
+            "symbol": "BTCUSDT",
+            "fundingTime": 1786521600000,
+            "fundingRate": "0.00008568",
+            "markPrice": "63810.89568841",
+            "rateType": "Regular",
+        }
+    ]
+
+    with patch.object(
+        BinanceExchange,
+        "_get_funding_rate_raw",
+        return_value=raw_funding_rates,
+    ) as mock_get_funding_rate_raw:
+        exchange_client = BinanceExchange()
+
+        start_time = datetime(
+            2026,
+            8,
+            13,
+            0,
+            0,
+            tzinfo=timezone.utc,
+        )
+        end_time = datetime(
+            2026,
+            8,
+            13,
+            8,
+            0,
+            tzinfo=timezone.utc,
+        )
+
+        result = exchange_client.get_funding_rate(
+            symbol="btcusdt",
+            market_type=MarketType.PERPETUAL,
+            start_time=start_time,
+            end_time=end_time,
+        )
+
+        assert len(result) == 1
+
+        funding_rate = result[0]
+
+        assert funding_rate.exchange == Exchange.BINANCE
+        assert funding_rate.market_type == MarketType.PERPETUAL
+        assert funding_rate.symbol == "BTCUSDT"
+        assert funding_rate.funding_rate == 0.00008568
+        assert funding_rate.next_funding_time is None
+        assert funding_rate.timestamp == datetime.fromtimestamp(
+            1786521600000 / 1000,
+            tz=timezone.utc,
+        )
+
+        mock_get_funding_rate_raw.assert_called_once_with(
+            symbol="BTCUSDT",
+            start_time=int(start_time.timestamp() * 1000),
+            end_time=int(end_time.timestamp() * 1000),
+        )

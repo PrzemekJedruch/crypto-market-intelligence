@@ -314,9 +314,9 @@ endTime   = 1786637460000
 
 `startTime` and `endTime` are optional Unix timestamps in milliseconds.
 
-### Trade Time Range Handling
+### Funding Rate Time Range Handling
 
-The public `get_trades()` method accepts timezone-aware Python `datetime` values:
+The public `get_funding_rate()` method accepts timezone-aware Python `datetime` values:
 
 ```text
 start_time
@@ -589,7 +589,7 @@ Historical funding-rate data is downloaded from:
 GET /fapi/v1/fundingRate
 ```
 
-Current project method:
+Raw download helper:
 
 ```python
 BinanceExchange._get_funding_rate_raw()
@@ -597,13 +597,13 @@ BinanceExchange._get_funding_rate_raw()
 
 This method returns the raw Binance response.
 
-The future public method:
+Public normalization method:
 
 ```python
 BinanceExchange.get_funding_rate()
 ```
 
-will convert the response into normalized internal `FundingRate` models.
+`get_funding_rate()` is implemented and converts the raw Binance response into normalized internal `FundingRate` models.
 
 ### Request Parameters
 
@@ -629,9 +629,9 @@ endTime   = 1786637460000
 
 `startTime` and `endTime` are optional Unix timestamps in milliseconds.
 
-### Trade Time Range Handling
+### Funding Rate Time Range Handling
 
-The public `get_trades()` method accepts timezone-aware Python `datetime` values:
+The public `get_funding_rate()` method accepts timezone-aware Python `datetime` values:
 
 ```text
 start_time
@@ -709,7 +709,7 @@ The project should not assume that every possible funding event or instrument mu
 
 ### Funding Rate Mapping
 
-Planned mapping:
+Implemented mapping:
 
 ```text
 Binance                     Internal FundingRate
@@ -878,7 +878,9 @@ Current mocked tests cover:
 - raw Open Interest requests,
 - Open Interest requests with `startTime` and `endTime`,
 - normalized `OpenInterest` model conversion through `get_open_interest()`,
-- raw funding-rate requests.
+- raw funding-rate requests,
+- funding-rate requests with `startTime` and `endTime`,
+- normalized `FundingRate` model conversion through `get_funding_rate()`.
 
 Live API checks are performed separately when validating the integration.
 
@@ -902,11 +904,11 @@ Current Binance integration progress:
 [x] Download trades
 [x] Download Open Interest
 [x] Download funding rates
-[ ] Convert Binance responses into internal models
+[x] Convert Binance responses into internal models
     [x] Candles
     [x] Trades
     [x] Open Interest
-    [ ] Funding rates
+    [x] Funding rates
 [ ] Add basic error handling
 [ ] Add request limits and pagination handling
 ```

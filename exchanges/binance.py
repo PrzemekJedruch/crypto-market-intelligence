@@ -9,6 +9,7 @@ from exchanges.base_exchange import BaseExchange
 from models.candle import Candle
 from models.trade import Trade
 from models.open_interest import OpenInterest
+from models.funding_rate import FundingRate
 
 class BinanceExchange(BaseExchange):
     """Client for Binance USD-M Futures public market data API."""
@@ -240,19 +241,62 @@ class BinanceExchange(BaseExchange):
         self,
         symbol: str,
         limit: int = 100,
+        start_time: int | None = None,
+        end_time: int | None = None,
     ) -> list:
         """Download raw historical funding rate data from Binance USD-M Futures."""
         normalized_symbol = self._normalize_symbol(symbol)
 
+        params = {
+            "symbol": normalized_symbol,
+            "limit": limit,
+        }
+
+        if start_time is not None:
+            params["startTime"] = start_time
+
+        if end_time is not None:
+            params["endTime"] = end_time
+
         response = requests.get(
             f"{self.BASE_URL}/fapi/v1/fundingRate",
-            params={
-                "symbol": normalized_symbol,
-                "limit": limit,
-            },
+            params=params,
             timeout=10,
         )
 
         response.raise_for_status()
 
         return response.json()
+
+    def get_funding_rate(
+        self,
+        symbol: str,
+        market_type: MarketType,
+        start_time: datetime,
+        end_time: datetime,
+    ) -> list[FundingRate]:
+        """Return normalized funding rate data for the requested time range."""
+        normalized_start = self._normalize_timestamp(start_time)
+        normalized_end = self._normalize_timestamp(end_time)
+        normalized_symbol = self._normalize_symbol(symbol)
+
+        raw_funding_rates = self._get_funding_rate_raw(
+            symbol=normalized_symbol,
+            start_time=int(normalized_start.timestamp() * 1000),
+            end_time=int(normalized_end.timestamp() * 1000),
+        )
+
+        return [
+            FundingRate(
+                exchange=self.exchange,
+                market_type=market_type,
+                symbol=normalized_symbol,
+                timestamp=datetime.fromtimestamp(
+                    record["fundingTime"] / 1000,
+                    tz=timezone.utc,
+                ),
+                funding_rate=float(record["fundingRate"]),
+                next_funding_time=None,
+            )
+            for record in raw_funding_rates
+        ]
