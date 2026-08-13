@@ -5,6 +5,11 @@ import requests
 from enums.exchange import Exchange
 from exchanges.base_exchange import BaseExchange
 
+from datetime import datetime, timezone
+
+from enums.market_type import MarketType
+from models.candle import Candle
+
 
 class BinanceExchange(BaseExchange):
     """Client for Binance USD-M Futures public market data API."""
@@ -31,17 +36,27 @@ class BinanceExchange(BaseExchange):
         symbol: str,
         interval: str,
         limit: int = 500,
+        start_time: int | None = None,
+        end_time: int | None = None,
     ) -> list:
         """Download raw candle data from Binance USD-M Futures."""
         normalized_symbol = self._normalize_symbol(symbol)
 
+        params = {
+            "symbol": normalized_symbol,
+            "interval": interval,
+            "limit": limit,
+        }
+
+        if start_time is not None:
+            params["startTime"] = start_time
+
+        if end_time is not None:
+            params["endTime"] = end_time
+
         response = requests.get(
             f"{self.BASE_URL}/fapi/v1/klines",
-            params={
-                "symbol": normalized_symbol,
-                "interval": interval,
-                "limit": limit,
-            },
+            params=params,
             timeout=10,
         )
 
@@ -53,6 +68,8 @@ class BinanceExchange(BaseExchange):
         self,
         symbol: str,
         limit: int = 500,
+        start_time: int | None = None,
+        end_time: int | None = None,
     ) -> list:
         """Download raw aggregate trade data from Binance USD-M Futures."""
         normalized_symbol = self._normalize_symbol(symbol)

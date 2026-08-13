@@ -112,7 +112,7 @@ Raw candle data is downloaded from:
 GET /fapi/v1/klines
 ```
 
-Current project method:
+Raw download helper:
 
 ```python
 BinanceExchange._get_candles_raw()
@@ -120,31 +120,64 @@ BinanceExchange._get_candles_raw()
 
 The leading underscore indicates that this is an internal helper method. It returns the raw Binance response and is not intended to be used directly by the rest of the application.
 
-The future public method:
+Public normalization method:
 
 ```python
 BinanceExchange.get_candles()
 ```
 
-will return normalized internal `Candle` models.
+`get_candles()` is implemented and returns normalized internal `Candle` models.
 
 ### Request Parameters
 
-Currently used parameters:
+Currently supported raw-request parameters:
 
 ```text
 symbol
 interval
 limit
+startTime
+endTime
 ```
+
+The Python helper uses `start_time` and `end_time`, which are sent to Binance as `startTime` and `endTime`.
 
 Example:
 
 ```text
-symbol   = BTCUSDT
-interval = 1m
-limit    = 5
+symbol    = BTCUSDT
+interval  = 1m
+limit     = 5
+startTime = 1786637160000
+endTime   = 1786637460000
 ```
+
+`startTime` and `endTime` are optional Unix timestamps in milliseconds.
+
+### Candle Time Range Handling
+
+The public `get_candles()` method accepts timezone-aware Python `datetime` values:
+
+```text
+start_time
+end_time
+```
+
+Before the API request:
+
+```text
+datetime
+    ↓
+_normalize_timestamp()
+    ↓
+UTC datetime
+    ↓
+Unix timestamp in milliseconds
+    ↓
+startTime / endTime
+```
+
+This keeps the internal interface based on Python `datetime` objects while isolating Binance's millisecond timestamp format inside the exchange client.
 
 ### Raw Binance Kline Structure
 
@@ -196,7 +229,7 @@ Important implementation details:
 
 ### Candle Mapping
 
-The initial internal `Candle` model uses only part of the Binance response.
+The implemented `get_candles()` method converts the required Binance fields into the internal `Candle` model.
 
 ```text
 Binance response        Internal Candle
@@ -732,6 +765,8 @@ Current mocked tests cover:
 
 - API `ping`,
 - raw candle requests,
+- candle requests with `startTime` and `endTime`,
+- normalized `Candle` model conversion through `get_candles()`,
 - raw aggregate trade requests,
 - raw Open Interest requests,
 - raw funding-rate requests.
@@ -759,6 +794,10 @@ Current Binance integration progress:
 [x] Download Open Interest
 [x] Download funding rates
 [ ] Convert Binance responses into internal models
+    [x] Candles
+    [ ] Trades
+    [ ] Open Interest
+    [ ] Funding rates
 [ ] Add basic error handling
 [ ] Add request limits and pagination handling
 ```

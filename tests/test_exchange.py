@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 import pytest
 from exchanges.binance import BinanceExchange
 from unittest.mock import patch
+from enums.market_type import MarketType
 
 
 def test_base_exchange_creation():
@@ -251,3 +252,110 @@ def test_get_funding_rate_raw():
 
         mock_response.raise_for_status.assert_called_once_with()
         mock_response.json.assert_called_once_with()
+
+def test_get_candles_raw_with_time_range():
+    """Test that BinanceExchange includes start and end times in candle requests."""
+    raw_candles = []
+
+    with patch("exchanges.binance.requests.get") as mock_get:
+        mock_response = mock_get.return_value
+        mock_response.json.return_value = raw_candles
+        mock_response.raise_for_status.return_value = None
+
+        exchange_client = BinanceExchange()
+
+        result = exchange_client._get_candles_raw(
+            symbol="btcusdt",
+            interval="1m",
+            limit=5,
+            start_time=1786637160000,
+            end_time=1786637460000,
+        )
+
+        assert result == raw_candles
+
+        mock_get.assert_called_once_with(
+            "https://fapi.binance.com/fapi/v1/klines",
+            params={
+                "symbol": "BTCUSDT",
+                "interval": "1m",
+                "limit": 5,
+                "startTime": 1786637160000,
+                "endTime": 1786637460000,
+            },
+            timeout=10,
+        )
+
+        mock_response.raise_for_status.assert_called_once_with()
+        mock_response.json.assert_called_once_with()
+
+    
+def test_get_candles_returns_normalized_models():
+    """Test that BinanceExchange converts raw candles into Candle models."""
+    raw_candles = [
+        [
+            1786637160000,
+            "63465.00",
+            "63484.10",
+            "63431.00",
+            "63431.10",
+            "149.946",
+        ]
+    ]
+
+    with patch.object(
+        BinanceExchange,
+        "_get_candles_raw",
+        return_value=raw_candles,
+    ) as mock_get_candles_raw:
+        exchange_client = BinanceExchange()
+
+        start_time = datetime(
+            2026,
+            8,
+            13,
+            10,
+            0,
+            tzinfo=timezone.utc,
+        )
+        end_time = datetime(
+            2026,
+            8,
+            13,
+            11,
+            0,
+            tzinfo=timezone.utc,
+        )
+
+        result = exchange_client.get_candles(
+            symbol="btcusdt",
+            market_type=MarketType.PERPETUAL,
+            interval="1m",
+            start_time=start_time,
+            end_time=end_time,
+        )
+
+        assert len(result) == 1
+
+        candle = result[0]
+
+        assert candle.exchange == Exchange.BINANCE
+        assert candle.market_type == MarketType.PERPETUAL
+        assert candle.symbol == "BTCUSDT"
+        assert candle.interval == "1m"
+        assert candle.open == 63465.0
+        assert candle.high == 63484.1
+        assert candle.low == 63431.0
+        assert candle.close == 63431.1
+        assert candle.volume == 149.946
+        assert candle.timestamp == datetime.fromtimestamp(
+            1786637160000 / 1000,
+            tz=timezone.utc,
+        )
+
+        mock_get_candles_raw.assert_called_once_with(
+            symbol="btcusdt",
+            interval="1m",
+            start_time=int(start_time.timestamp() * 1000),
+            end_time=int(end_time.timestamp() * 1000),
+        )
