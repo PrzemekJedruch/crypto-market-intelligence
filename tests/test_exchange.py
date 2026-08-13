@@ -93,4 +93,85 @@ def test_binance_ping(mock_get):
     )
 
     mock_response.raise_for_status.assert_called_once_with()
-    
+
+def test_get_candles_raw():
+    """Test that BinanceExchange requests raw candle data correctly."""
+    raw_candles = [
+        [
+            1720000000000,
+            "60000.0",
+            "60100.0",
+            "59900.0",
+            "60050.0",
+            "12.5",
+        ]
+    ]
+
+    with patch("exchanges.binance.requests.get") as mock_get:
+        mock_response = mock_get.return_value
+        mock_response.json.return_value = raw_candles
+        mock_response.raise_for_status.return_value = None
+
+        exchange_client = BinanceExchange()
+
+        result = exchange_client._get_candles_raw(
+            symbol="btcusdt",
+            interval="1m",
+            limit=5,
+        )
+
+        assert result == raw_candles
+
+        mock_get.assert_called_once_with(
+            "https://fapi.binance.com/fapi/v1/klines",
+            params={
+                "symbol": "BTCUSDT",
+                "interval": "1m",
+                "limit": 5,
+            },
+            timeout=10,
+        )
+
+        mock_response.raise_for_status.assert_called_once_with()
+        mock_response.json.assert_called_once_with()
+
+
+def test_get_trades_raw():
+    """Test that BinanceExchange requests raw aggregate trade data correctly."""
+    raw_trades = [
+        {
+            "a": 12345,
+            "p": "63450.10",
+            "q": "0.125",
+            "f": 100,
+            "l": 101,
+            "T": 1786637160000,
+            "m": False,
+        }
+    ]
+
+    with patch("exchanges.binance.requests.get") as mock_get:
+        mock_response = mock_get.return_value
+        mock_response.json.return_value = raw_trades
+        mock_response.raise_for_status.return_value = None
+
+        exchange_client = BinanceExchange()
+
+        result = exchange_client._get_trades_raw(
+            symbol="btcusdt",
+            limit=5,
+        )
+
+        assert result == raw_trades
+
+        mock_get.assert_called_once_with(
+            "https://fapi.binance.com/fapi/v1/aggTrades",
+            params={
+                "symbol": "BTCUSDT",
+                "limit": 5,
+            },
+            timeout=10,
+        )
+
+        mock_response.raise_for_status.assert_called_once_with()
+        mock_response.json.assert_called_once_with()

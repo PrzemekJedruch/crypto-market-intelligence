@@ -34,11 +34,11 @@
 - [x] Complete Phase 1 — Core Data Models
 - [x] Complete Phase 2 — Exchange Interface
 - [x] Connect to Binance public API
+- [x] Download candles
+- [x] Download trades
 
 ### Next Tasks
 
-- [ ] Download candles
-- [ ] Download trades
 - [ ] Download Open Interest
 - [ ] Download funding rates
 - [ ] Convert Binance responses into internal models
@@ -149,8 +149,8 @@ Symbol: BTCUSDT
 ### Tasks
 
 - [x] Connect to Binance public API
-- [ ] Download candles
-- [ ] Download trades
+- [x] Download candles
+- [x] Download trades
 - [ ] Download Open Interest
 - [ ] Download funding rates
 - [ ] Convert Binance responses into internal models

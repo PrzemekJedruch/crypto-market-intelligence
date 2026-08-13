@@ -1,3 +1,5 @@
+from urllib import response
+
 import requests
 
 from enums.exchange import Exchange
@@ -23,4 +25,47 @@ class BinanceExchange(BaseExchange):
         response.raise_for_status()
 
         return True
-    
+
+    def _get_candles_raw(
+    self,
+    symbol: str,
+    interval: str,
+    limit: int = 500,
+    ) -> list:
+        """Download raw candle data from Binance USD-M Futures."""
+        normalized_symbol = self._normalize_symbol(symbol)
+
+        response = requests.get(
+        f"{self.BASE_URL}/fapi/v1/klines",
+        params={
+            "symbol": normalized_symbol,
+            "interval": interval,
+            "limit": limit,
+        },
+        timeout=10,
+    )
+
+        response.raise_for_status()
+
+        return response.json()
+
+    def _get_trades_raw(
+    self,
+    symbol: str,
+    limit: int = 500,
+    ) -> list:
+        """Download raw aggregate trade data from Binance USD-M Futures."""
+        normalized_symbol = self._normalize_symbol(symbol)
+
+        response = requests.get(
+            f"{self.BASE_URL}/fapi/v1/aggTrades",
+            params={
+                "symbol": normalized_symbol,
+                "limit": limit,
+            },
+            timeout=10,
+        )
+
+        response.raise_for_status()
+
+        return response.json()
