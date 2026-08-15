@@ -179,6 +179,108 @@ startTime / endTime
 
 This keeps the internal interface based on Python `datetime` objects while isolating Binance's millisecond timestamp format inside the exchange client.
 
+### Candle Request Limit
+
+Historical candle downloads use a project-level request limit:
+
+```python
+CANDLE_REQUEST_LIMIT = 1000
+```
+
+The limit is defined on `BinanceExchange` so pagination behavior is explicit and easy to adjust in one place.
+
+### Candle Interval Conversion
+
+Pagination needs to know where the next candle starts.
+
+The helper:
+
+```python
+BinanceExchange._interval_to_milliseconds()
+```
+
+converts supported candle intervals into milliseconds.
+
+Current mappings:
+
+```text
+1m  ->     60_000
+3m  ->    180_000
+5m  ->    300_000
+15m ->    900_000
+30m ->  1_800_000
+1h  ->  3_600_000
+2h  ->  7_200_000
+4h  -> 14_400_000
+6h  -> 21_600_000
+8h  -> 28_800_000
+12h -> 43_200_000
+1d  -> 86_400_000
+```
+
+Unsupported intervals raise `ValueError`.
+
+### Candle Pagination
+
+The helper:
+
+```python
+BinanceExchange._get_all_candles_raw()
+```
+
+downloads all candle pages required for the requested time range.
+
+The current flow is:
+
+```text
+start_time
+    ↓
+_get_candles_raw(limit=1000)
+    ↓
+append returned candles
+    ↓
+last candle open time
+    ↓
++ interval duration
+    ↓
+next start_time
+    ↓
+repeat until the range is complete
+```
+
+After each full page, the next request begins at:
+
+```text
+last_open_time + interval_ms
+```
+
+This prevents the final candle from one page being requested again as the first candle of the next page.
+
+Pagination stops when:
+
+- Binance returns no candles,
+- the returned page contains fewer records than `CANDLE_REQUEST_LIMIT`,
+- the next calculated start time would not move forward,
+- the requested time range has been exhausted.
+
+The forward-progress check protects the client from an accidental infinite loop if an unexpected API response contains a non-advancing timestamp.
+
+The public `get_candles()` method now uses `_get_all_candles_raw()` instead of calling `_get_candles_raw()` directly.
+
+Current candle flow:
+
+```text
+get_candles()
+    ↓
+_get_all_candles_raw()
+    ↓
+_get_candles_raw()
+    ↓
+_get_json()
+    ↓
+Binance API
+```
+
 ### Raw Binance Kline Structure
 
 A Binance kline is returned as a positional list.
@@ -935,6 +1037,10 @@ Current mocked tests cover:
 - API `ping`,
 - raw candle requests,
 - candle requests with `startTime` and `endTime`,
+- candle interval conversion to milliseconds,
+- rejection of unsupported candle intervals,
+- multi-page candle pagination,
+- correct advancement of the next candle `start_time`,
 - normalized `Candle` model conversion through `get_candles()`,
 - raw aggregate trade requests,
 - trade requests with `startTime` and `endTime`,
@@ -978,6 +1084,10 @@ Current Binance integration progress:
     [x] Funding rates
 [x] Add basic error handling
 [ ] Add request limits and pagination handling
+    [x] Candles
+    [ ] Trades
+    [ ] Open Interest
+    [ ] Funding rates
 ```
 
 ---
@@ -988,9 +1098,8 @@ This file should be expanded as Binance integration grows.
 
 Add documentation for:
 
-- request weights and rate limits,
-- pagination behavior,
-- supported intervals,
+- remaining endpoint request limits and pagination behavior,
+- request weights and exchange-wide rate-limit strategy,
 - detailed Binance API error payloads,
 - retry and backoff strategy,
 - missing-data handling,

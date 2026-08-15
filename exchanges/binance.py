@@ -21,6 +21,8 @@ class BinanceExchange(BaseExchange):
 
     BASE_URL = "https://fapi.binance.com"
 
+    CANDLE_REQUEST_LIMIT = 1000
+
     def __init__(self):
         """Initialize the Binance exchange client."""
         super().__init__(exchange=Exchange.BINANCE)
@@ -90,7 +92,7 @@ class BinanceExchange(BaseExchange):
         normalized_end = self._normalize_timestamp(end_time)
         normalized_symbol = self._normalize_symbol(symbol)
 
-        raw_candles = self._get_candles_raw(
+        raw_candles = self._get_all_candles_raw(
             symbol=normalized_symbol,
             interval=interval,
             start_time=int(normalized_start.timestamp() * 1000),
@@ -298,3 +300,65 @@ class BinanceExchange(BaseExchange):
             )
             for record in raw_funding_rates
         ]
+
+    @staticmethod
+    def _interval_to_milliseconds(interval: str) -> int:
+        """Convert a Binance candle interval into milliseconds."""
+        interval_map = {
+            "1m": 60_000,
+            "3m": 180_000,
+            "5m": 300_000,
+            "15m": 900_000,
+            "30m": 1_800_000,
+            "1h": 3_600_000,
+            "2h": 7_200_000,
+            "4h": 14_400_000,
+            "6h": 21_600_000,
+            "8h": 28_800_000,
+            "12h": 43_200_000,
+            "1d": 86_400_000,
+        }
+
+        try:
+            return interval_map[interval]
+        except KeyError as error:
+            raise ValueError(f"Unsupported candle interval: {interval}") from error
+
+    def _get_all_candles_raw(
+        self,
+        symbol: str,
+        interval: str,
+        start_time: int,
+        end_time: int,
+    ) -> list:
+        """Download all raw candles for the requested time range."""
+        interval_ms = self._interval_to_milliseconds(interval)
+        current_start_time = start_time
+        all_candles = []
+
+        while current_start_time <= end_time:
+            candles = self._get_candles_raw(
+                symbol=symbol,
+                interval=interval,
+                limit=self.CANDLE_REQUEST_LIMIT,
+                start_time=current_start_time,
+                end_time=end_time,
+            )
+
+            if not candles:
+                break
+
+            all_candles.extend(candles)
+
+            last_open_time = candles[-1][0]
+            next_start_time = last_open_time + interval_ms
+
+            if next_start_time <= current_start_time:
+                break
+
+            current_start_time = next_start_time
+
+            if len(candles) < self.CANDLE_REQUEST_LIMIT:
+                break
+
+        return all_candles

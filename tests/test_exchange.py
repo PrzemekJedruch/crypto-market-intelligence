@@ -46,6 +46,7 @@ def test_normalize_timestamp_rejects_naive_datetime():
     with pytest.raises(ValueError, match="Timestamp must be timezone-aware."):
         BaseExchange._normalize_timestamp(timestamp)
 
+
 def test_normalize_symbol():
     """Test that a symbol is normalized to uppercase without surrounding spaces."""
     symbol = " ethusdt "
@@ -54,12 +55,16 @@ def test_normalize_symbol():
 
     assert normalized == "ETHUSDT"
 
+
 def test_normalize_symbol_rejects_invalid_format():
     """Test that symbols with separators are rejected."""
     symbol = "BTC-USDT"
 
-    with pytest.raises(ValueError, match="Symbol must contain only letters and numbers."):
+    with pytest.raises(
+        ValueError, match="Symbol must contain only letters and numbers."
+    ):
         BaseExchange._normalize_symbol(symbol)
+
 
 def test_normalize_symbol_rejects_empty_symbol():
     """Test that an empty symbol is rejected."""
@@ -67,6 +72,7 @@ def test_normalize_symbol_rejects_empty_symbol():
 
     with pytest.raises(ValueError, match="Symbol cannot be empty."):
         BaseExchange._normalize_symbol(symbol)
+
 
 def test_binance_exchange_creation():
     """Test that BinanceExchange uses the Binance exchange identifier and base URL."""
@@ -99,6 +105,7 @@ def test_binance_ping(mock_get):
     )
 
     mock_response.raise_for_status.assert_called_once_with()
+
 
 def test_get_candles_raw():
     """Test that BinanceExchange requests raw candle data correctly."""
@@ -182,6 +189,7 @@ def test_get_trades_raw():
         mock_response.raise_for_status.assert_called_once_with()
         mock_response.json.assert_called_once_with()
 
+
 def test_get_open_interest_raw():
     """Test that BinanceExchange requests raw Open Interest data correctly."""
     raw_open_interest = [
@@ -221,6 +229,7 @@ def test_get_open_interest_raw():
         mock_response.raise_for_status.assert_called_once_with()
         mock_response.json.assert_called_once_with()
 
+
 def test_get_funding_rate_raw():
     """Test that BinanceExchange requests raw funding rate data correctly."""
     raw_funding_rates = [
@@ -258,6 +267,7 @@ def test_get_funding_rate_raw():
         mock_response.raise_for_status.assert_called_once_with()
         mock_response.json.assert_called_once_with()
 
+
 def test_get_candles_raw_with_time_range():
     """Test that BinanceExchange includes start and end times in candle requests."""
     raw_candles = []
@@ -294,7 +304,7 @@ def test_get_candles_raw_with_time_range():
         mock_response.raise_for_status.assert_called_once_with()
         mock_response.json.assert_called_once_with()
 
-    
+
 def test_get_candles_returns_normalized_models():
     """Test that BinanceExchange converts raw candles into Candle models."""
     raw_candles = [
@@ -361,9 +371,12 @@ def test_get_candles_returns_normalized_models():
         mock_get_candles_raw.assert_called_once_with(
             symbol="BTCUSDT",
             interval="1m",
+            limit=1000,
             start_time=int(start_time.timestamp() * 1000),
             end_time=int(end_time.timestamp() * 1000),
         )
+
+
 def test_get_trades_raw_with_time_range():
     """Test that BinanceExchange includes start and end times in trade requests."""
     raw_trades = []
@@ -397,6 +410,7 @@ def test_get_trades_raw_with_time_range():
 
         mock_response.raise_for_status.assert_called_once_with()
         mock_response.json.assert_called_once_with()
+
 
 def test_get_trades_returns_normalized_models():
     """Test that BinanceExchange converts raw trades into Trade models."""
@@ -466,6 +480,7 @@ def test_get_trades_returns_normalized_models():
             end_time=int(end_time.timestamp() * 1000),
         )
 
+
 def test_get_open_interest_raw_with_time_range():
     """Test that BinanceExchange includes start and end times in Open Interest requests."""
     raw_open_interest = []
@@ -501,6 +516,7 @@ def test_get_open_interest_raw_with_time_range():
 
         mock_response.raise_for_status.assert_called_once_with()
         mock_response.json.assert_called_once_with()
+
 
 def test_get_open_interest_returns_normalized_models():
     """Test that BinanceExchange converts raw Open Interest into models."""
@@ -567,6 +583,7 @@ def test_get_open_interest_returns_normalized_models():
             end_time=int(end_time.timestamp() * 1000),
         )
 
+
 def test_get_funding_rate_raw_with_time_range():
     """Test that BinanceExchange includes start and end times in funding-rate requests."""
     raw_funding_rates = []
@@ -600,6 +617,7 @@ def test_get_funding_rate_raw_with_time_range():
 
         mock_response.raise_for_status.assert_called_once_with()
         mock_response.json.assert_called_once_with()
+
 
 def test_get_funding_rate_returns_normalized_models():
     """Test that BinanceExchange converts raw funding rates into FundingRate models."""
@@ -664,6 +682,7 @@ def test_get_funding_rate_returns_normalized_models():
             end_time=int(end_time.timestamp() * 1000),
         )
 
+
 def test_get_json_raises_binance_api_error_on_request_failure():
     """Test that request errors are converted into BinanceAPIError."""
     with patch("exchanges.binance.requests.get") as mock_get:
@@ -676,3 +695,61 @@ def test_get_json_raises_binance_api_error_on_request_failure():
             match="Binance API request failed",
         ):
             exchange_client._get_json("/fapi/v1/ping")
+
+
+def test_interval_to_milliseconds():
+    """Test that Binance candle intervals are converted to milliseconds."""
+    assert BinanceExchange._interval_to_milliseconds("1m") == 60_000
+    assert BinanceExchange._interval_to_milliseconds("5m") == 300_000
+    assert BinanceExchange._interval_to_milliseconds("1h") == 3_600_000
+    assert BinanceExchange._interval_to_milliseconds("1d") == 86_400_000
+
+
+def test_interval_to_milliseconds_raises_for_unsupported_interval():
+    """Test that unsupported candle intervals raise ValueError."""
+    with pytest.raises(
+        ValueError,
+        match="Unsupported candle interval",
+    ):
+        BinanceExchange._interval_to_milliseconds("7m")
+
+
+def test_get_all_candles_raw_paginates_requests():
+    """Test that BinanceExchange downloads candles across multiple pages."""
+    first_page = [
+        [0, "100", "110", "90", "105", "10"],
+        [60_000, "105", "115", "100", "110", "12"],
+    ]
+
+    second_page = [
+        [120_000, "110", "120", "105", "115", "8"],
+    ]
+
+    with patch.object(
+        BinanceExchange,
+        "CANDLE_REQUEST_LIMIT",
+        2,
+    ):
+        with patch.object(
+            BinanceExchange,
+            "_get_candles_raw",
+            side_effect=[first_page, second_page],
+        ) as mock_get_candles_raw:
+            exchange_client = BinanceExchange()
+
+            result = exchange_client._get_all_candles_raw(
+                symbol="BTCUSDT",
+                interval="1m",
+                start_time=0,
+                end_time=180_000,
+            )
+
+            assert result == first_page + second_page
+
+            assert mock_get_candles_raw.call_count == 2
+
+            first_call = mock_get_candles_raw.call_args_list[0]
+            second_call = mock_get_candles_raw.call_args_list[1]
+
+            assert first_call.kwargs["start_time"] == 0
+            assert second_call.kwargs["start_time"] == 120_000
