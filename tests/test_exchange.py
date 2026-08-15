@@ -476,10 +476,10 @@ def test_get_trades_returns_normalized_models():
 
         mock_get_trades_raw.assert_called_once_with(
             symbol="BTCUSDT",
+            limit=1000,
             start_time=int(start_time.timestamp() * 1000),
             end_time=int(end_time.timestamp() * 1000),
         )
-
 
 def test_get_open_interest_raw_with_time_range():
     """Test that BinanceExchange includes start and end times in Open Interest requests."""
@@ -753,3 +753,89 @@ def test_get_all_candles_raw_paginates_requests():
 
             assert first_call.kwargs["start_time"] == 0
             assert second_call.kwargs["start_time"] == 120_000
+
+
+def test_split_time_range():
+    """Test that a time range is split into consecutive inclusive windows."""
+    result = BinanceExchange._split_time_range(
+        start_time=0,
+        end_time=10_000,
+        window_ms=3_000,
+    )
+
+    assert result == [
+        (0, 3_000),
+        (3_001, 6_001),
+        (6_002, 9_002),
+        (9_003, 10_000),
+    ]
+
+
+def test_get_all_trades_raw_combines_multiple_time_windows():
+    """Test that BinanceExchange combines trades from multiple time windows."""
+    first_window_trades = [
+        {
+            "a": 1,
+            "p": "100.0",
+            "q": "0.1",
+            "T": 1_000,
+            "m": False,
+        }
+    ]
+
+    second_window_trades = [
+        {
+            "a": 2,
+            "p": "101.0",
+            "q": "0.2",
+            "T": 2_000,
+            "m": True,
+        }
+    ]
+
+    with patch.object(
+        BinanceExchange,
+        "_split_time_range",
+        return_value=[
+            (0, 999),
+            (1_000, 1_999),
+        ],
+    ):
+        with patch.object(
+            BinanceExchange,
+            "_get_trades_raw",
+            side_effect=[
+                first_window_trades,
+                second_window_trades,
+            ],
+        ) as mock_get_trades_raw:
+            exchange_client = BinanceExchange()
+
+            result = exchange_client._get_all_trades_raw(
+                symbol="BTCUSDT",
+                start_time=0,
+                end_time=1_999,
+            )
+
+            assert result == (
+                first_window_trades
+                + second_window_trades
+            )
+
+            assert mock_get_trades_raw.call_count == 2
+            first_call = mock_get_trades_raw.call_args_list[0]
+            second_call = mock_get_trades_raw.call_args_list[1]
+
+            assert first_call.kwargs == {
+                "symbol": "BTCUSDT",
+                "limit": 1000,
+                "start_time": 0,
+                "end_time": 999,
+            }
+
+            assert second_call.kwargs == {
+                "symbol": "BTCUSDT",
+                "limit": 1000,
+                "start_time": 1_000,
+                "end_time": 1_999,
+            }

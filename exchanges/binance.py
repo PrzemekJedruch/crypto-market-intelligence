@@ -22,6 +22,8 @@ class BinanceExchange(BaseExchange):
     BASE_URL = "https://fapi.binance.com"
 
     CANDLE_REQUEST_LIMIT = 1000
+    TRADE_REQUEST_LIMIT = 1000
+    TRADE_REQUEST_WINDOW_MS = 60 * 60 * 1000 - 1
 
     def __init__(self):
         """Initialize the Binance exchange client."""
@@ -156,7 +158,7 @@ class BinanceExchange(BaseExchange):
         normalized_end = self._normalize_timestamp(end_time)
         normalized_symbol = self._normalize_symbol(symbol)
 
-        raw_trades = self._get_trades_raw(
+        raw_trades = self._get_all_trades_raw(
             symbol=normalized_symbol,
             start_time=int(normalized_start.timestamp() * 1000),
             end_time=int(normalized_end.timestamp() * 1000),
@@ -362,3 +364,57 @@ class BinanceExchange(BaseExchange):
                 break
 
         return all_candles
+
+
+    @staticmethod
+    def _split_time_range(
+        start_time: int,
+        end_time: int,
+        window_ms: int,
+    ) -> list[tuple[int, int]]:
+        """Split a millisecond time range into smaller inclusive windows."""
+        windows = []
+        current_start = start_time
+
+        while current_start <= end_time:
+            current_end = min(
+                current_start + window_ms,
+                end_time,
+            )
+
+            windows.append(
+                (
+                    current_start,
+                    current_end,
+                )
+            )
+
+            current_start = current_end + 1
+
+        return windows
+    def _get_all_trades_raw(
+        self,
+        symbol: str,
+        start_time: int,
+        end_time: int,
+    ) -> list:
+        """Download all raw aggregate trades for the requested time range."""
+        all_trades = []
+
+        windows = self._split_time_range(
+            start_time=start_time,
+            end_time=end_time,
+            window_ms=self.TRADE_REQUEST_WINDOW_MS,
+        )
+
+        for window_start, window_end in windows:
+            trades = self._get_trades_raw(
+                symbol=symbol,
+                limit=self.TRADE_REQUEST_LIMIT,
+                start_time=window_start,
+                end_time=window_end,
+            )
+
+            all_trades.extend(trades)
+
+        return all_trades

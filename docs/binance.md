@@ -416,9 +416,9 @@ endTime   = 1786637460000
 
 `startTime` and `endTime` are optional Unix timestamps in milliseconds.
 
-### Funding Rate Time Range Handling
+### Trade Time Range Handling
 
-The public `get_funding_rate()` method accepts timezone-aware Python `datetime` values:
+The public `get_trades()` method accepts timezone-aware Python `datetime` values:
 
 ```text
 start_time
@@ -440,6 +440,119 @@ startTime / endTime
 ```
 
 This keeps the internal interface based on Python `datetime` objects while isolating Binance's millisecond timestamp format inside the exchange client.
+
+### Trade Request Limits
+
+The current Binance client defines:
+
+```python
+TRADE_REQUEST_LIMIT = 1000
+TRADE_REQUEST_WINDOW_MS = 60 * 60 * 1000 - 1
+```
+
+`TRADE_REQUEST_LIMIT` controls the maximum number of aggregate trades requested in one API call.
+
+`TRADE_REQUEST_WINDOW_MS` defines the maximum time window used by the project for one aggregate-trade request:
+
+```text
+3,599,999 ms
+```
+
+The client therefore divides larger requested ranges into consecutive sub-hour windows before downloading trades.
+
+### Time-Range Splitting
+
+The reusable helper:
+
+```python
+BinanceExchange._split_time_range()
+```
+
+splits one inclusive millisecond range into smaller inclusive windows.
+
+Example:
+
+```text
+start_time = 0
+end_time   = 10,000
+window_ms  = 3,000
+```
+
+Result:
+
+```text
+(0, 3000)
+(3001, 6001)
+(6002, 9002)
+(9003, 10000)
+```
+
+Each next window starts one millisecond after the previous window ends, so the generated windows do not overlap and do not leave gaps.
+
+### Trade Time-Window Pagination
+
+The helper:
+
+```python
+BinanceExchange._get_all_trades_raw()
+```
+
+downloads aggregate trades for every generated time window and combines the results into one list.
+
+Current flow:
+
+```text
+requested time range
+        ↓
+_split_time_range()
+        ↓
+window 1
+window 2
+window 3
+...
+        ↓
+_get_trades_raw() for each window
+        ↓
+combine returned records
+        ↓
+one raw trade list
+```
+
+Each window is requested with:
+
+```text
+limit = TRADE_REQUEST_LIMIT
+```
+
+The public `get_trades()` method now uses `_get_all_trades_raw()` instead of calling `_get_trades_raw()` directly.
+
+Current trade flow:
+
+```text
+get_trades()
+    ↓
+_get_all_trades_raw()
+    ↓
+_split_time_range()
+    ↓
+_get_trades_raw()
+    ↓
+_get_json()
+    ↓
+Binance API
+```
+
+### Current Trade Pagination Limitation
+
+Time-window splitting is implemented, but one important case is intentionally still pending:
+
+```text
+one time window returns exactly TRADE_REQUEST_LIMIT records
+```
+
+The client does not yet continue paginating inside that same time window.
+
+For very active markets, a single sub-hour window can therefore still require additional record-level pagination. That behavior must be implemented before trade pagination is considered fully complete.
 
 ### Raw Binance Aggregate Trade Structure
 
@@ -731,9 +844,9 @@ endTime   = 1786637460000
 
 `startTime` and `endTime` are optional Unix timestamps in milliseconds.
 
-### Funding Rate Time Range Handling
+### Trade Time Range Handling
 
-The public `get_funding_rate()` method accepts timezone-aware Python `datetime` values:
+The public `get_trades()` method accepts timezone-aware Python `datetime` values:
 
 ```text
 start_time
@@ -1044,6 +1157,9 @@ Current mocked tests cover:
 - normalized `Candle` model conversion through `get_candles()`,
 - raw aggregate trade requests,
 - trade requests with `startTime` and `endTime`,
+- generic inclusive time-range splitting,
+- combining aggregate trades across multiple time windows,
+- correct trade request arguments for each generated window,
 - normalized `Trade` model conversion through `get_trades()`,
 - raw Open Interest requests,
 - Open Interest requests with `startTime` and `endTime`,
@@ -1086,6 +1202,9 @@ Current Binance integration progress:
 [ ] Add request limits and pagination handling
     [x] Candles
     [ ] Trades
+        [x] Time-window splitting
+        [x] Multi-window downloading
+        [ ] Pagination inside a full 1000-record window
     [ ] Open Interest
     [ ] Funding rates
 ```
