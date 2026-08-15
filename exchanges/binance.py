@@ -126,6 +126,7 @@ class BinanceExchange(BaseExchange):
         limit: int = 500,
         start_time: int | None = None,
         end_time: int | None = None,
+        from_id: int | None = None,
     ) -> list:
         """Download raw aggregate trade data from Binance USD-M Futures."""
         normalized_symbol = self._normalize_symbol(symbol)
@@ -140,6 +141,9 @@ class BinanceExchange(BaseExchange):
 
         if end_time is not None:
             params["endTime"] = end_time
+
+        if from_id is not None:
+            params["fromId"] = from_id
 
         return self._get_json(
             endpoint="/fapi/v1/aggTrades",
@@ -408,13 +412,54 @@ class BinanceExchange(BaseExchange):
         )
 
         for window_start, window_end in windows:
-            trades = self._get_trades_raw(
+            trades = self._get_trades_window_raw(
                 symbol=symbol,
-                limit=self.TRADE_REQUEST_LIMIT,
                 start_time=window_start,
                 end_time=window_end,
             )
 
             all_trades.extend(trades)
+
+        return all_trades
+
+
+    def _get_trades_window_raw(
+        self,
+        symbol: str,
+        start_time: int,
+        end_time: int,
+    ) -> list:
+        """Download all raw aggregate trades within one time window."""
+        trades = self._get_trades_raw(
+            symbol=symbol,
+            limit=self.TRADE_REQUEST_LIMIT,
+            start_time=start_time,
+            end_time=end_time,
+        )
+
+        all_trades = list(trades)
+
+        while len(trades) == self.TRADE_REQUEST_LIMIT:
+            next_from_id = trades[-1]["a"] + 1
+
+            trades = self._get_trades_raw(
+                symbol=symbol,
+                limit=self.TRADE_REQUEST_LIMIT,
+                from_id=next_from_id,
+            )
+
+            if not trades:
+                break
+
+            trades_in_window = [
+                trade
+                for trade in trades
+                if start_time <= trade["T"] <= end_time
+            ]
+
+            all_trades.extend(trades_in_window)
+
+            if len(trades_in_window) < len(trades):
+                break
 
         return all_trades

@@ -839,3 +839,113 @@ def test_get_all_trades_raw_combines_multiple_time_windows():
                 "start_time": 1_000,
                 "end_time": 1_999,
             }
+
+def test_get_trades_raw_with_from_id():
+    """Test that BinanceExchange includes fromId in aggregate trade requests."""
+    raw_trades = []
+
+    with patch("exchanges.binance.requests.get") as mock_get:
+        mock_response = mock_get.return_value
+        mock_response.json.return_value = raw_trades
+        mock_response.raise_for_status.return_value = None
+
+        exchange_client = BinanceExchange()
+
+        result = exchange_client._get_trades_raw(
+            symbol="btcusdt",
+            limit=1000,
+            from_id=5001,
+        )
+
+        assert result == raw_trades
+
+        mock_get.assert_called_once_with(
+            "https://fapi.binance.com/fapi/v1/aggTrades",
+            params={
+                "symbol": "BTCUSDT",
+                "limit": 1000,
+                "fromId": 5001,
+            },
+            timeout=10,
+        )
+
+def test_get_trades_window_raw_paginates_with_from_id():
+    """Test that a full trade window continues pagination using fromId."""
+    first_page = [
+        {
+            "a": 100,
+            "p": "100.0",
+            "q": "0.1",
+            "T": 1_000,
+            "m": False,
+        },
+        {
+            "a": 101,
+            "p": "101.0",
+            "q": "0.2",
+            "T": 2_000,
+            "m": True,
+        },
+    ]
+
+    second_page = [
+        {
+            "a": 102,
+            "p": "102.0",
+            "q": "0.3",
+            "T": 2_500,
+            "m": False,
+        },
+        {
+            "a": 103,
+            "p": "103.0",
+            "q": "0.4",
+            "T": 4_000,
+            "m": True,
+        },
+    ]
+
+    with patch.object(
+        BinanceExchange,
+        "TRADE_REQUEST_LIMIT",
+        2,
+    ):
+        with patch.object(
+            BinanceExchange,
+            "_get_trades_raw",
+            side_effect=[
+                first_page,
+                second_page,
+            ],
+        ) as mock_get_trades_raw:
+            exchange_client = BinanceExchange()
+
+            result = exchange_client._get_trades_window_raw(
+                symbol="BTCUSDT",
+                start_time=0,
+                end_time=3_000,
+            )
+
+            assert result == [
+                first_page[0],
+                first_page[1],
+                second_page[0],
+            ]
+
+            assert mock_get_trades_raw.call_count == 2
+
+            first_call = mock_get_trades_raw.call_args_list[0]
+            second_call = mock_get_trades_raw.call_args_list[1]
+
+            assert first_call.kwargs == {
+                "symbol": "BTCUSDT",
+                "limit": 2,
+                "start_time": 0,
+                "end_time": 3_000,
+            }
+
+            assert second_call.kwargs == {
+                "symbol": "BTCUSDT",
+                "limit": 2,
+                "from_id": 102,
+            }

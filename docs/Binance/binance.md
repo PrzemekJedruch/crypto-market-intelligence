@@ -497,7 +497,7 @@ The helper:
 BinanceExchange._get_all_trades_raw()
 ```
 
-downloads aggregate trades for every generated time window and combines the results into one list.
+splits the requested time range into smaller windows and combines the trades downloaded from every window into one raw list.
 
 Current flow:
 
@@ -511,22 +511,105 @@ window 2
 window 3
 ...
         ↓
-_get_trades_raw() for each window
+_get_trades_window_raw()
         ↓
 combine returned records
         ↓
 one raw trade list
 ```
 
-Each window is requested with:
+Each generated time window is handled independently.
+
+### Pagination Inside One Trade Window
+
+The helper:
+
+```python
+BinanceExchange._get_trades_window_raw()
+```
+
+downloads all aggregate trades belonging to one time window.
+
+The first request uses the time boundaries:
 
 ```text
+startTime
+endTime
 limit = TRADE_REQUEST_LIMIT
 ```
 
-The public `get_trades()` method now uses `_get_all_trades_raw()` instead of calling `_get_trades_raw()` directly.
+If Binance returns fewer records than `TRADE_REQUEST_LIMIT`, the window is complete.
 
-Current trade flow:
+If Binance returns exactly the full request limit, the client assumes that more aggregate trades may exist inside the same window.
+
+It then reads the aggregate trade ID from the final record:
+
+```python
+last_trade_id = trades[-1]["a"]
+```
+
+and continues from the next ID:
+
+```python
+next_from_id = last_trade_id + 1
+```
+
+The following request uses:
+
+```text
+fromId = next_from_id
+limit  = TRADE_REQUEST_LIMIT
+```
+
+Example:
+
+```text
+first page:
+
+a = 4001
+...
+a = 5000
+
+full page
+    ↓
+next_from_id = 5001
+    ↓
+second request:
+
+fromId = 5001
+```
+
+### Why Later Pages Are Filtered by Timestamp
+
+Continuation requests based on `fromId` are not restricted by the original `startTime` and `endTime`.
+
+They can therefore return aggregate trades that occur after the end of the current time window.
+
+The client filters continuation pages with:
+
+```python
+start_time <= trade["T"] <= end_time
+```
+
+Only records that still belong to the current window are appended to the result.
+
+Example:
+
+```text
+window:
+0 ms → 3000 ms
+
+continuation page:
+
+T = 2500 ms  ✓ keep
+T = 4000 ms  ✗ outside the window
+```
+
+If a continuation page reaches records outside the requested window, pagination for that window stops.
+
+### Complete Trade Pagination Flow
+
+The public `get_trades()` method now supports two pagination levels:
 
 ```text
 get_trades()
@@ -535,6 +618,22 @@ _get_all_trades_raw()
     ↓
 _split_time_range()
     ↓
+for each time window
+    ↓
+_get_trades_window_raw()
+    ↓
+first request by startTime/endTime
+    ↓
+full request limit?
+    ├── no  → window complete
+    └── yes
+          ↓
+       continue with fromId
+          ↓
+       filter by trade timestamp
+          ↓
+       repeat if required
+    ↓
 _get_trades_raw()
     ↓
 _get_json()
@@ -542,17 +641,23 @@ _get_json()
 Binance API
 ```
 
-### Current Trade Pagination Limitation
-
-Time-window splitting is implemented, but one important case is intentionally still pending:
+This means trade downloading now handles both:
 
 ```text
-one time window returns exactly TRADE_REQUEST_LIMIT records
+large requested time ranges
+        ↓
+multiple time windows
 ```
 
-The client does not yet continue paginating inside that same time window.
+and:
 
-For very active markets, a single sub-hour window can therefore still require additional record-level pagination. That behavior must be implemented before trade pagination is considered fully complete.
+```text
+high activity inside one window
+        ↓
+multiple fromId pages
+```
+
+The resulting raw trades are returned to `get_trades()`, which converts them into normalized internal `Trade` models.
 
 ### Raw Binance Aggregate Trade Structure
 
@@ -1157,9 +1262,12 @@ Current mocked tests cover:
 - normalized `Candle` model conversion through `get_candles()`,
 - raw aggregate trade requests,
 - trade requests with `startTime` and `endTime`,
+- aggregate trade requests with `fromId`,
 - generic inclusive time-range splitting,
 - combining aggregate trades across multiple time windows,
 - correct trade request arguments for each generated window,
+- continuation inside a full trade window using the next aggregate trade ID,
+- filtering continuation records back to the requested time window,
 - normalized `Trade` model conversion through `get_trades()`,
 - raw Open Interest requests,
 - Open Interest requests with `startTime` and `endTime`,
@@ -1201,10 +1309,12 @@ Current Binance integration progress:
 [x] Add basic error handling
 [ ] Add request limits and pagination handling
     [x] Candles
-    [ ] Trades
+    [x] Trades
         [x] Time-window splitting
         [x] Multi-window downloading
-        [ ] Pagination inside a full 1000-record window
+        [x] Pagination inside a full 1000-record window
+        [x] Continuation with `fromId`
+        [x] Timestamp filtering for continuation pages
     [ ] Open Interest
     [ ] Funding rates
 ```
