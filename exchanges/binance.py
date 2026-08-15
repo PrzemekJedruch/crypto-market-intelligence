@@ -24,6 +24,9 @@ class BinanceExchange(BaseExchange):
     CANDLE_REQUEST_LIMIT = 1000
     TRADE_REQUEST_LIMIT = 1000
     TRADE_REQUEST_WINDOW_MS = 60 * 60 * 1000 - 1
+    OPEN_INTEREST_REQUEST_LIMIT = 500
+    FUNDING_RATE_REQUEST_LIMIT = 1000
+
 
     def __init__(self):
         """Initialize the Binance exchange client."""
@@ -226,7 +229,7 @@ class BinanceExchange(BaseExchange):
         normalized_end = self._normalize_timestamp(end_time)
         normalized_symbol = self._normalize_symbol(symbol)
 
-        raw_open_interest = self._get_open_interest_raw(
+        raw_open_interest = self._get_all_open_interest_raw(
             symbol=normalized_symbol,
             period="5m",
             start_time=int(normalized_start.timestamp() * 1000),
@@ -286,7 +289,7 @@ class BinanceExchange(BaseExchange):
         normalized_end = self._normalize_timestamp(end_time)
         normalized_symbol = self._normalize_symbol(symbol)
 
-        raw_funding_rates = self._get_funding_rate_raw(
+        raw_funding_rates = self._get_all_funding_rates_raw(
             symbol=normalized_symbol,
             start_time=int(normalized_start.timestamp() * 1000),
             end_time=int(normalized_end.timestamp() * 1000),
@@ -463,3 +466,86 @@ class BinanceExchange(BaseExchange):
                 break
 
         return all_trades
+
+    def _get_all_open_interest_raw(
+        self,
+        symbol: str,
+        period: str,
+        start_time: int,
+        end_time: int,
+    ) -> list:
+        """Download all raw Open Interest records for the requested time range."""
+        all_records = []
+        current_start_time = start_time
+
+        while current_start_time <= end_time:
+            records = self._get_open_interest_raw(
+                symbol=symbol,
+                period=period,
+                limit=self.OPEN_INTEREST_REQUEST_LIMIT,
+                start_time=current_start_time,
+                end_time=end_time,
+            )
+
+            if not records:
+                break
+
+            all_records.extend(records)
+
+            last_timestamp = max(
+                record["timestamp"]
+                for record in records
+            )
+
+            next_start_time = last_timestamp + 1
+
+            if next_start_time <= current_start_time:
+                break
+
+            current_start_time = next_start_time
+
+            if len(records) < self.OPEN_INTEREST_REQUEST_LIMIT:
+                break
+
+        return all_records
+
+
+    def _get_all_funding_rates_raw(
+        self,
+        symbol: str,
+        start_time: int,
+        end_time: int,
+    ) -> list:
+        """Download all raw funding rate records for the requested time range."""
+        all_records = []
+        current_start_time = start_time
+
+        while current_start_time <= end_time:
+            records = self._get_funding_rate_raw(
+                symbol=symbol,
+                limit=self.FUNDING_RATE_REQUEST_LIMIT,
+                start_time=current_start_time,
+                end_time=end_time,
+            )
+
+            if not records:
+                break
+
+            all_records.extend(records)
+
+            last_funding_time = max(
+                record["fundingTime"]
+                for record in records
+            )
+
+            next_start_time = last_funding_time + 1
+
+            if next_start_time <= current_start_time:
+                break
+
+            current_start_time = next_start_time
+
+            if len(records) < self.FUNDING_RATE_REQUEST_LIMIT:
+                break
+
+        return all_records

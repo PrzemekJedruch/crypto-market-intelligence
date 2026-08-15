@@ -6,8 +6,8 @@
 |---|---|---:|
 | 1. Core Data Models | ✅ DONE | 100% |
 | 2. Exchange Interface | ✅ DONE | 100% |
-| 3. Binance Integration | 🟡 **IN PROGRESS** | 85% |
-| 4. Database Layer | ⬜ TODO | 0% |
+| 3. Binance Integration | ✅ **DONE** | 100% |
+| 4. Database Layer |🟡 **IN PROGRESS** | 0% |
 | 5. Historical Synchronization | ⬜ TODO | 0% |
 | 6. Data Quality | ⬜ TODO | 0% |
 | 7. Bybit Integration | ⬜ TODO | 0% |
@@ -25,25 +25,28 @@
 
 ## Current Focus
 
-**Current Phase:** Phase 3 — Binance Integration
+**Current Phase:** Phase 4 — Database Layer
 
 **Status:** 🟡 **IN PROGRESS**  
-**Next Milestone:**  Implement the first real market data source.
+**Next Milestone:**  Download only missing data instead of downloading the full history every time.
 ### Completed Recently
 
 - [x] Complete Phase 1 — Core Data Models
 - [x] Complete Phase 2 — Exchange Interface
-- [x] Connect to Binance public API
-- [x] Download candles
-- [x] Download trades
-- [x] Download Open Interest
-- [x] Download funding rates
-- [x] Convert Binance responses into internal models
-- [x] Add basic error handling
+- [x] Complete Phase 3 — Binance Integration
 
 ### Next Tasks
 
-- [ ] Add request limits and pagination handling
+- [ ] Configure PostgreSQL
+- [ ] Create database connection layer
+- [ ] Create candle table
+- [ ] Create trade table
+- [ ] Create Open Interest table
+- [ ] Create funding rate table
+- [ ] Create synchronization state table
+- [ ] Create repositories
+- [ ] Add unique constraints
+- [ ] Prevent duplicate records
 
 
 ## Status Legend
@@ -132,7 +135,7 @@ Every supported exchange can be used through the same interface.
 
 ## Phase 3 — Binance Integration
 
-**Status:** 🟡 **IN PROGRESS**
+**Status:** ✅ **DONE**
 
 ### Goal
 
@@ -155,7 +158,7 @@ Symbol: BTCUSDT
 - [x] Download funding rates
 - [x] Convert Binance responses into internal models
 - [x] Add basic error handling
-- [ ] Add request limits and pagination handling
+- [x] Add request limits and pagination handling
 
 ### Expected Result
 
@@ -165,7 +168,7 @@ Python can retrieve normalized BTCUSDT market data from Binance.
 
 ## Phase 4 — Database Layer
 
-**Status:** ⬜ TODO
+**Status:**🟡 **IN PROGRESS** 
 
 ### Goal
 

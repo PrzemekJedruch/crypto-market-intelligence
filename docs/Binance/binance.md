@@ -416,9 +416,9 @@ endTime   = 1786637460000
 
 `startTime` and `endTime` are optional Unix timestamps in milliseconds.
 
-### Trade Time Range Handling
+### Funding Rate Time Range Handling
 
-The public `get_trades()` method accepts timezone-aware Python `datetime` values:
+The public `get_funding_rate()` method accepts timezone-aware Python `datetime` values:
 
 ```text
 start_time
@@ -830,6 +830,81 @@ period = 5m
 
 because the `BaseExchange.get_open_interest()` contract does not currently expose a period argument.
 
+### Open Interest Request Limit
+
+The Binance client defines:
+
+```python
+OPEN_INTEREST_REQUEST_LIMIT = 500
+```
+
+This value is used by the pagination layer when downloading historical Open Interest data.
+
+### Open Interest Pagination
+
+The helper:
+
+```python
+BinanceExchange._get_all_open_interest_raw()
+```
+
+downloads all Open Interest pages required for the requested time range.
+
+The pagination flow is:
+
+```text
+start_time
+    ↓
+_get_open_interest_raw(limit=500)
+    ↓
+append returned records
+    ↓
+find maximum record timestamp
+    ↓
++ 1 ms
+    ↓
+next start_time
+    ↓
+repeat until complete
+```
+
+The next request starts at:
+
+```python
+max(record["timestamp"] for record in records) + 1
+```
+
+Using `max(...)` means the pagination logic does not depend on the order of records in the API response.
+
+Pagination stops when:
+
+- Binance returns no records,
+- the returned page contains fewer records than `OPEN_INTEREST_REQUEST_LIMIT`,
+- the next calculated start time does not move forward,
+- the requested time range has been exhausted.
+
+The public `get_open_interest()` method now uses `_get_all_open_interest_raw()` instead of calling `_get_open_interest_raw()` directly.
+
+Current Open Interest flow:
+
+```text
+get_open_interest()
+        ↓
+_get_all_open_interest_raw()
+        ↓
+_get_open_interest_raw()
+        ↓
+_get_json()
+        ↓
+Binance API
+        ↓
+raw Open Interest pages
+        ↓
+OpenInterest(...)
+        ↓
+list[OpenInterest]
+```
+
 ### Raw Binance Open Interest Structure
 
 Example response record observed during live testing:
@@ -949,9 +1024,9 @@ endTime   = 1786637460000
 
 `startTime` and `endTime` are optional Unix timestamps in milliseconds.
 
-### Trade Time Range Handling
+### Funding Rate Time Range Handling
 
-The public `get_trades()` method accepts timezone-aware Python `datetime` values:
+The public `get_funding_rate()` method accepts timezone-aware Python `datetime` values:
 
 ```text
 start_time
@@ -973,6 +1048,81 @@ startTime / endTime
 ```
 
 This keeps the internal interface based on Python `datetime` objects while isolating Binance's millisecond timestamp format inside the exchange client.
+
+### Funding Rate Request Limit
+
+The Binance client defines:
+
+```python
+FUNDING_RATE_REQUEST_LIMIT = 1000
+```
+
+This value controls the maximum number of historical funding-rate records requested in one page.
+
+### Funding Rate Pagination
+
+The helper:
+
+```python
+BinanceExchange._get_all_funding_rates_raw()
+```
+
+downloads all funding-rate pages required for the requested time range.
+
+The pagination flow is:
+
+```text
+start_time
+    ↓
+_get_funding_rate_raw(limit=1000)
+    ↓
+append returned records
+    ↓
+find maximum fundingTime
+    ↓
++ 1 ms
+    ↓
+next start_time
+    ↓
+repeat until complete
+```
+
+The next request begins at:
+
+```python
+max(record["fundingTime"] for record in records) + 1
+```
+
+Using `max(...)` avoids depending on response ordering.
+
+Pagination stops when:
+
+- Binance returns no funding records,
+- the returned page contains fewer records than `FUNDING_RATE_REQUEST_LIMIT`,
+- the next calculated start time does not move forward,
+- the requested time range has been exhausted.
+
+The public `get_funding_rate()` method now uses `_get_all_funding_rates_raw()` instead of calling `_get_funding_rate_raw()` directly.
+
+Current funding-rate flow:
+
+```text
+get_funding_rate()
+        ↓
+_get_all_funding_rates_raw()
+        ↓
+_get_funding_rate_raw()
+        ↓
+_get_json()
+        ↓
+Binance API
+        ↓
+raw funding-rate pages
+        ↓
+FundingRate(...)
+        ↓
+list[FundingRate]
+```
 
 ### Raw Binance Funding Rate Structure
 
@@ -1271,9 +1421,13 @@ Current mocked tests cover:
 - normalized `Trade` model conversion through `get_trades()`,
 - raw Open Interest requests,
 - Open Interest requests with `startTime` and `endTime`,
+- multi-page Open Interest pagination,
+- Open Interest continuation from `max(timestamp) + 1`,
 - normalized `OpenInterest` model conversion through `get_open_interest()`,
 - raw funding-rate requests,
 - funding-rate requests with `startTime` and `endTime`,
+- multi-page funding-rate pagination,
+- funding-rate continuation from `max(fundingTime) + 1`,
 - normalized `FundingRate` model conversion through `get_funding_rate()`,
 - conversion of `requests.RequestException` into `BinanceAPIError`.
 
@@ -1307,7 +1461,7 @@ Current Binance integration progress:
     [x] Open Interest
     [x] Funding rates
 [x] Add basic error handling
-[ ] Add request limits and pagination handling
+[x] Add request limits and pagination handling
     [x] Candles
     [x] Trades
         [x] Time-window splitting
@@ -1315,8 +1469,12 @@ Current Binance integration progress:
         [x] Pagination inside a full 1000-record window
         [x] Continuation with `fromId`
         [x] Timestamp filtering for continuation pages
-    [ ] Open Interest
-    [ ] Funding rates
+    [x] Open Interest
+        [x] 500-record request limit
+        [x] Timestamp-based pagination
+    [x] Funding rates
+        [x] 1000-record request limit
+        [x] Funding-time-based pagination
 ```
 
 ---
@@ -1327,7 +1485,6 @@ This file should be expanded as Binance integration grows.
 
 Add documentation for:
 
-- remaining endpoint request limits and pagination behavior,
 - request weights and exchange-wide rate-limit strategy,
 - detailed Binance API error payloads,
 - retry and backoff strategy,

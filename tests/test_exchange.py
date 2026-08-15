@@ -579,6 +579,7 @@ def test_get_open_interest_returns_normalized_models():
         mock_get_open_interest_raw.assert_called_once_with(
             symbol="BTCUSDT",
             period="5m",
+            limit=500,
             start_time=int(start_time.timestamp() * 1000),
             end_time=int(end_time.timestamp() * 1000),
         )
@@ -678,6 +679,7 @@ def test_get_funding_rate_returns_normalized_models():
 
         mock_get_funding_rate_raw.assert_called_once_with(
             symbol="BTCUSDT",
+            limit=1000,
             start_time=int(start_time.timestamp() * 1000),
             end_time=int(end_time.timestamp() * 1000),
         )
@@ -948,4 +950,139 @@ def test_get_trades_window_raw_paginates_with_from_id():
                 "symbol": "BTCUSDT",
                 "limit": 2,
                 "from_id": 102,
+            }
+
+def test_get_all_open_interest_raw_paginates_requests():
+    """Test that BinanceExchange downloads Open Interest across multiple pages."""
+    first_page = [
+        {
+            "symbol": "BTCUSDT",
+            "sumOpenInterest": "100.0",
+            "sumOpenInterestValue": "1000.0",
+            "timestamp": 2_000,
+        },
+        {
+            "symbol": "BTCUSDT",
+            "sumOpenInterest": "90.0",
+            "sumOpenInterestValue": "900.0",
+            "timestamp": 1_000,
+        },
+    ]
+
+    second_page = [
+        {
+            "symbol": "BTCUSDT",
+            "sumOpenInterest": "110.0",
+            "sumOpenInterestValue": "1100.0",
+            "timestamp": 3_000,
+        }
+    ]
+
+    with patch.object(
+        BinanceExchange,
+        "OPEN_INTEREST_REQUEST_LIMIT",
+        2,
+    ):
+        with patch.object(
+            BinanceExchange,
+            "_get_open_interest_raw",
+            side_effect=[
+                first_page,
+                second_page,
+            ],
+        ) as mock_get_open_interest_raw:
+            exchange_client = BinanceExchange()
+
+            result = exchange_client._get_all_open_interest_raw(
+                symbol="BTCUSDT",
+                period="5m",
+                start_time=0,
+                end_time=4_000,
+            )
+
+            assert result == first_page + second_page
+
+            assert mock_get_open_interest_raw.call_count == 2
+            first_call = mock_get_open_interest_raw.call_args_list[0]
+            second_call = mock_get_open_interest_raw.call_args_list[1]
+
+            assert first_call.kwargs == {
+                "symbol": "BTCUSDT",
+                "period": "5m",
+                "limit": 2,
+                "start_time": 0,
+                "end_time": 4_000,
+            }
+
+            assert second_call.kwargs == {
+                "symbol": "BTCUSDT",
+                "period": "5m",
+                "limit": 2,
+                "start_time": 2_001,
+                "end_time": 4_000,
+            }
+
+
+def test_get_all_funding_rates_raw_paginates_requests():
+    """Test that BinanceExchange downloads funding rates across multiple pages."""
+    first_page = [
+        {
+            "symbol": "BTCUSDT",
+            "fundingTime": 2_000,
+            "fundingRate": "0.0001",
+        },
+        {
+            "symbol": "BTCUSDT",
+            "fundingTime": 1_000,
+            "fundingRate": "0.0002",
+        },
+    ]
+
+    second_page = [
+        {
+            "symbol": "BTCUSDT",
+            "fundingTime": 3_000,
+            "fundingRate": "0.0003",
+        }
+    ]
+
+    with patch.object(
+        BinanceExchange,
+        "FUNDING_RATE_REQUEST_LIMIT",
+        2,
+    ):
+        with patch.object(
+            BinanceExchange,
+            "_get_funding_rate_raw",
+            side_effect=[
+                first_page,
+                second_page,
+            ],
+        ) as mock_get_funding_rate_raw:
+            exchange_client = BinanceExchange()
+
+            result = exchange_client._get_all_funding_rates_raw(
+                symbol="BTCUSDT",
+                start_time=0,
+                end_time=4_000,
+            )
+
+            assert result == first_page + second_page
+
+            assert mock_get_funding_rate_raw.call_count == 2
+            first_call = mock_get_funding_rate_raw.call_args_list[0]
+            second_call = mock_get_funding_rate_raw.call_args_list[1]
+
+            assert first_call.kwargs == {
+                "symbol": "BTCUSDT",
+                "limit": 2,
+                "start_time": 0,
+                "end_time": 4_000,
+            }
+
+            assert second_call.kwargs == {
+                "symbol": "BTCUSDT",
+                "limit": 2,
+                "start_time": 2_001,
+                "end_time": 4_000,
             }
