@@ -6,8 +6,8 @@
 |---|---|---:|
 | 1. Core Data Models | ✅ DONE | 100% |
 | 2. Exchange Interface | ✅ DONE | 100% |
-| 3. Binance Integration | ✅ **DONE** | 100% |
-| 4. Database Layer |🟡 **IN PROGRESS** | 0% |
+| 3. Binance Integration | ✅ DONE | 100% |
+| 4. Database Layer | ⬜ TODO | 0% |
 | 5. Historical Synchronization | ⬜ TODO | 0% |
 | 6. Data Quality | ⬜ TODO | 0% |
 | 7. Bybit Integration | ⬜ TODO | 0% |
@@ -25,29 +25,32 @@
 
 ## Current Focus
 
-**Current Phase:** Phase 4 — Database Layer
+**Completed:** Phase 3 — Binance Integration  
+**Next Phase:** Phase 4 — Database Layer  
+**Next Milestone:** Store normalized Binance market data in PostgreSQL and prepare the foundation for incremental synchronization.
 
-**Status:** 🟡 **IN PROGRESS**  
-**Next Milestone:**  Download only missing data instead of downloading the full history every time.
 ### Completed Recently
 
-- [x] Complete Phase 1 — Core Data Models
-- [x] Complete Phase 2 — Exchange Interface
-- [x] Complete Phase 3 — Binance Integration
+- [x] Complete Binance candle downloads and normalization
+- [x] Complete Binance aggregate trade downloads and normalization
+- [x] Complete historical Open Interest downloads and normalization
+- [x] Complete historical funding-rate downloads and normalization
+- [x] Add shared Binance API error handling
+- [x] Add candle request limits and pagination
+- [x] Add two-level aggregate trade pagination
+- [x] Add Open Interest pagination
+- [x] Add funding-rate pagination
+- [x] Cover the Binance exchange layer with automated tests
+- [x] Document Binance API-specific behavior
 
 ### Next Tasks
 
 - [ ] Configure PostgreSQL
-- [ ] Create database connection layer
-- [ ] Create candle table
-- [ ] Create trade table
-- [ ] Create Open Interest table
-- [ ] Create funding rate table
-- [ ] Create synchronization state table
-- [ ] Create repositories
+- [ ] Create the database connection layer
+- [ ] Define the initial market-data tables
 - [ ] Add unique constraints
-- [ ] Prevent duplicate records
-
+- [ ] Create repositories
+- [ ] Prepare synchronization-state storage
 
 ## Status Legend
 
@@ -56,23 +59,25 @@
 - ⬜ **TODO** — work has not started yet
 - 🔴 **BLOCKED** — progress is currently blocked
 
+---
+
 ## Project Direction
 
-The project will be developed in small stages.
+The project is developed in small stages.
 
-The priority is to build a reliable market data pipeline first.
-Advanced analytics, market scanning, backtesting, and machine learning will be added only after the core data layer is stable.
+The priority is to build a reliable market-data pipeline first. Advanced analytics, market scanning, backtesting, and machine learning are added only after the core data layer is stable.
 
 ---
 
 ## Phase 1 — Core Data Models
-**Status:** ✅ **DONE**
+
+**Status:** ✅ DONE
 
 ### Goal
 
 Define clean, reusable, and exchange-independent data structures.
 
-### Tasks
+### Completed
 
 - [x] Create project structure
 - [x] Create enums
@@ -81,18 +86,13 @@ Define clean, reusable, and exchange-independent data structures.
 - [x] Create `Trade`
 - [x] Create `OpenInterest`
 - [x] Create `FundingRate`
-- [x] Refactor market models to inherit from `BaseMarketData`
-- [x] Update `models/__init__.py`
-- [x] Create `README.md`
-- [x] Create `architecture.md`
-- [x] Create `roadmap.md`
-- [x] Create `data_model.md`
-- [x] Update architecture documentation after the base-model refactor
-- [x] Review naming conventions
+- [x] Use a shallow shared model hierarchy
+- [x] Export models and enums through package `__init__.py` files
+- [x] Define naming conventions
 - [x] Define comment and docstring conventions
-- [x] Add basic tests for all models
+- [x] Add basic model tests
 
-### Current Model Hierarchy
+### Model Hierarchy
 
 ```text
 BaseMarketData
@@ -102,20 +102,21 @@ BaseMarketData
 └── FundingRate
 ```
 
-### Expected Result
+### Result
 
-A clean and exchange-independent model layer with shared market identity fields and minimal duplication.
+The project has a common internal representation for market data that is independent of any specific exchange.
+
 ---
 
 ## Phase 2 — Exchange Interface
 
-**Status:** ✅ **DONE**
+**Status:** ✅ DONE
 
 ### Goal
 
 Create a common contract for exchange integrations.
 
-### Tasks
+### Completed
 
 - [x] Create `BaseExchange`
 - [x] Define `get_candles()`
@@ -123,71 +124,102 @@ Create a common contract for exchange integrations.
 - [x] Define `get_open_interest()`
 - [x] Define `get_funding_rate()`
 - [x] Define `get_supported_symbols()`
-- [x] Standardize timestamps
+- [x] Standardize UTC timestamp handling
 - [x] Standardize symbol handling
-- [x] Standardize returned models
+- [x] Standardize returned internal models
+- [x] Add tests for timestamp and symbol normalization
 
-### Expected Result
+### Result
 
-Every supported exchange can be used through the same interface.
+Exchange clients can implement the same application-facing interface while keeping exchange-specific logic inside their own classes.
 
 ---
 
 ## Phase 3 — Binance Integration
 
-**Status:** ✅ **DONE**
+**Status:** ✅ DONE
 
 ### Goal
 
-Implement the first real market data source.
+Implement the first complete market-data source.
 
 ### Initial Market
 
 ```text
 Exchange: Binance
-Market: Perpetual
+Market: USD-M Perpetual Futures
 Symbol: BTCUSDT
 ```
 
-### Tasks
+### Completed
 
 - [x] Connect to Binance public API
 - [x] Download candles
-- [x] Download trades
-- [x] Download Open Interest
-- [x] Download funding rates
-- [x] Convert Binance responses into internal models
-- [x] Add basic error handling
-- [x] Add request limits and pagination handling
+- [x] Download aggregate trades
+- [x] Download historical Open Interest
+- [x] Download historical funding rates
+- [x] Convert Binance candle responses into `Candle`
+- [x] Convert Binance trade responses into `Trade`
+- [x] Convert Binance Open Interest responses into `OpenInterest`
+- [x] Convert Binance funding-rate responses into `FundingRate`
+- [x] Normalize timestamps to UTC
+- [x] Normalize symbols
+- [x] Add `BinanceAPIError`
+- [x] Centralize GET requests through `_get_json()`
+- [x] Add request limits
+- [x] Add candle pagination
+- [x] Add aggregate-trade time-window pagination
+- [x] Add aggregate-trade continuation with `fromId`
+- [x] Add Open Interest pagination
+- [x] Add funding-rate pagination
+- [x] Add automated tests for the current Binance exchange layer
+- [x] Document Binance-specific API behavior
 
-### Expected Result
+### Result
 
-Python can retrieve normalized BTCUSDT market data from Binance.
+Python can retrieve complete requested ranges of normalized BTCUSDT market data from Binance through the common exchange interface.
 
 ---
 
 ## Phase 4 — Database Layer
 
-**Status:**🟡 **IN PROGRESS** 
+**Status:** ⬜ TODO
 
 ### Goal
 
-Store market data persistently.
+Store normalized market data persistently.
 
-### Tasks
+### Planned Tasks
 
 - [ ] Configure PostgreSQL
 - [ ] Create database connection layer
 - [ ] Create candle table
 - [ ] Create trade table
 - [ ] Create Open Interest table
-- [ ] Create funding rate table
-- [ ] Create synchronization state table
+- [ ] Create funding-rate table
+- [ ] Create synchronization-state table
 - [ ] Create repositories
 - [ ] Add unique constraints
 - [ ] Prevent duplicate records
+- [ ] Add repository tests
 
-### Expected Result
+### Initial Uniqueness Rules
+
+```text
+Candles:
+exchange + market_type + symbol + interval + timestamp
+
+Trades:
+exchange + market_type + symbol + trade_id
+
+Open Interest:
+exchange + market_type + symbol + timestamp
+
+Funding Rates:
+exchange + market_type + symbol + timestamp
+```
+
+### Result
 
 Downloaded market data can be stored and retrieved reliably.
 
@@ -201,7 +233,7 @@ Downloaded market data can be stored and retrieved reliably.
 
 Download only missing data instead of downloading the full history every time.
 
-### Tasks
+### Planned Tasks
 
 - [ ] Store last synchronized timestamp
 - [ ] Detect missing time ranges
@@ -212,23 +244,25 @@ Download only missing data instead of downloading the full history every time.
 - [ ] Detect duplicates
 - [ ] Detect missing records
 
-### Expected Result
-
-The application can resume data collection from the last successfully stored point.
-
-Example:
+### Target Flow
 
 ```text
-Database contains BTCUSDT candles until 10:00
+Database contains data until timestamp T
         ↓
-Application starts at 11:00
+Application starts later
         ↓
-Download only 10:00 → 11:00
+Detect latest stored timestamp
         ↓
-Store new candles
+Download only T → now
         ↓
-Update sync state
+Store new records
+        ↓
+Update synchronization state
 ```
+
+### Result
+
+The application can resume data collection from the last successfully stored point.
 
 ---
 
@@ -240,7 +274,7 @@ Update sync state
 
 Verify that stored data is trustworthy.
 
-### Tasks
+### Planned Tasks
 
 - [ ] Check missing timestamps
 - [ ] Check duplicate records
@@ -249,9 +283,9 @@ Verify that stored data is trustworthy.
 - [ ] Compare stored data with exchange responses
 - [ ] Validate UTC timestamps
 - [ ] Add logging
-- [ ] Add basic tests
+- [ ] Add data-quality tests
 
-### Expected Result
+### Result
 
 A stable and auditable historical dataset.
 
@@ -265,7 +299,7 @@ A stable and auditable historical dataset.
 
 Add the second exchange without changing the core architecture.
 
-### Tasks
+### Planned Tasks
 
 - [ ] Implement `BybitExchange`
 - [ ] Map Bybit symbols
@@ -276,7 +310,7 @@ Add the second exchange without changing the core architecture.
 - [ ] Reuse existing repositories
 - [ ] Reuse synchronization logic
 
-### Expected Result
+### Result
 
 The same application workflow works for Binance and Bybit.
 
@@ -290,7 +324,7 @@ The same application workflow works for Binance and Bybit.
 
 Add a third major derivatives exchange.
 
-### Tasks
+### Planned Tasks
 
 - [ ] Implement `OKXExchange`
 - [ ] Normalize market data
@@ -298,15 +332,9 @@ Add a third major derivatives exchange.
 - [ ] Reuse synchronization logic
 - [ ] Compare values across exchanges
 
-### Expected Result
+### Result
 
-BTC market data is available from:
-
-```text
-Binance
-Bybit
-OKX
-```
+BTC market data is available from multiple major derivatives exchanges.
 
 ---
 
@@ -327,15 +355,7 @@ SOLUSDT
 XRPUSDT
 ```
 
-Later:
-
-```text
-Top 20
-Top 50
-Top 100
-```
-
-### Tasks
+### Planned Tasks
 
 - [ ] Add symbol configuration
 - [ ] Add exchange-specific symbol mapping
@@ -343,7 +363,7 @@ Top 100
 - [ ] Track sync state per symbol
 - [ ] Handle unavailable instruments
 
-### Expected Result
+### Result
 
 The system can collect data for many markets automatically.
 
@@ -355,20 +375,20 @@ The system can collect data for many markets automatically.
 
 ### Goal
 
-Add real-time data collection.
+Add real-time market-data collection.
 
-### Tasks
+### Planned Tasks
 
 - [ ] Add WebSocket connections
 - [ ] Stream trades
-- [ ] Stream order book updates
+- [ ] Stream order-book updates
 - [ ] Handle reconnects
-- [ ] Handle heartbeat messages
+- [ ] Handle heartbeats
 - [ ] Handle temporary disconnects
 - [ ] Store live data
 - [ ] Merge live and historical datasets
 
-### Expected Result
+### Result
 
 The database is continuously updated with new market data.
 
@@ -380,7 +400,7 @@ The database is continuously updated with new market data.
 
 ### Goal
 
-Convert raw market data into analytical features.
+Convert normalized market data into analytical features.
 
 ### Initial Features
 
@@ -409,9 +429,9 @@ OI-weighted Funding
 Liquidation Imbalance
 ```
 
-### Expected Result
+### Result
 
-A feature dataset ready for analysis and modeling.
+A feature dataset ready for quantitative analysis and modeling.
 
 ---
 
@@ -421,44 +441,20 @@ A feature dataset ready for analysis and modeling.
 
 ### Goal
 
-Create global market metrics from multiple exchanges.
+Create market-wide metrics from multiple exchanges.
 
-### Examples
-
-```text
-Binance OI
-+
-Bybit OI
-+
-OKX OI
-=
-Global Open Interest
-```
-
-and:
-
-```text
-Binance CVD
-+
-Bybit CVD
-+
-OKX CVD
-=
-Global Futures CVD
-```
-
-### Tasks
+### Planned Tasks
 
 - [ ] Normalize measurement units
-- [ ] Apply exchange weights where appropriate
 - [ ] Align timestamps
-- [ ] Aggregate data
+- [ ] Apply exchange weights where appropriate
+- [ ] Aggregate market data
 - [ ] Compare exchange behavior
-- [ ] Detect divergences
+- [ ] Detect cross-exchange divergences
 
-### Expected Result
+### Result
 
-The platform provides a market-wide view instead of a single-exchange view.
+The platform provides a broader market view instead of relying on a single exchange.
 
 ---
 
@@ -470,7 +466,7 @@ The platform provides a market-wide view instead of a single-exchange view.
 
 Automatically search for unusual market conditions.
 
-### Initial Scanner Conditions
+### Initial Conditions
 
 - abnormal volume
 - Open Interest spike
@@ -480,18 +476,9 @@ Automatically search for unusual market conditions.
 - spot/futures divergence
 - cross-exchange divergence
 
-### Expected Result
+### Result
 
 The system ranks instruments based on current market conditions.
-
-Example:
-
-```text
-SOLUSDT    91
-BTCUSDT    82
-ETHUSDT    67
-XRPUSDT    45
-```
 
 ---
 
@@ -501,13 +488,9 @@ XRPUSDT    45
 
 ### Goal
 
-Create an interpretable market opportunity score.
+Create an interpretable market-opportunity score.
 
-### Initial Approach
-
-Start with rule-based scoring.
-
-Possible components:
+### Initial Components
 
 ```text
 Trend
@@ -520,11 +503,9 @@ Market Structure
 Cross-Exchange Confirmation
 ```
 
-### Expected Result
+### Result
 
-Each instrument receives a score from 0 to 100.
-
-Machine learning should not be introduced until the rule-based system and dataset are validated.
+Each instrument receives a structured score that summarizes current market conditions.
 
 ---
 
@@ -536,7 +517,7 @@ Machine learning should not be introduced until the rule-based system and datase
 
 Measure whether scanner conditions and signals have historical value.
 
-### Tasks
+### Planned Tasks
 
 - [ ] Define entry conditions
 - [ ] Define exit conditions
@@ -549,9 +530,9 @@ Measure whether scanner conditions and signals have historical value.
 - [ ] Calculate profit factor
 - [ ] Perform walk-forward testing
 
-### Expected Result
+### Result
 
-The project can distinguish useful signals from visually interesting but unprofitable patterns.
+The project can distinguish useful historical relationships from visually interesting but unreliable patterns.
 
 ---
 
@@ -563,7 +544,7 @@ The project can distinguish useful signals from visually interesting but unprofi
 
 Use historical features to estimate future market outcomes.
 
-### Initial Models
+### Initial Model Candidates
 
 - Logistic Regression
 - Random Forest
@@ -584,13 +565,13 @@ Probability of squeeze
 
 - time-based train/test split
 - walk-forward validation
-- no future data leakage
+- no future-data leakage
 - transaction costs included
-- feature importance analysis
+- feature-importance analysis
 
-### Expected Result
+### Result
 
-ML becomes an additional analytical layer, not the foundation of the platform.
+Machine learning becomes an additional analytical layer rather than the foundation of the platform.
 
 ---
 
@@ -602,7 +583,7 @@ ML becomes an additional analytical layer, not the foundation of the platform.
 
 Convert scanner and model outputs into structured market signals.
 
-Possible signal information:
+### Possible Signal Fields
 
 ```text
 symbol
@@ -614,22 +595,9 @@ reasons
 market conditions
 ```
 
-Example:
+### Result
 
-```text
-SOLUSDT
-
-Direction: LONG
-Score: 89
-Probability: 0.74
-
-Reasons:
-- Open Interest increasing
-- Positive Spot CVD
-- Relative volume above normal
-- Neutral funding
-- Breakout confirmed
-```
+Signals contain transparent context explaining why a market condition was detected.
 
 ---
 
@@ -641,7 +609,7 @@ Reasons:
 
 Turn the analytical engine into a usable application.
 
-Potential modules:
+### Potential Modules
 
 - web dashboard
 - market scanner
@@ -653,9 +621,9 @@ Potential modules:
 - user accounts
 - subscription plans
 
-### Expected Result
+### Result
 
-Crypto Market Intelligence becomes a usable analytical product rather than only a research project.
+Crypto Market Intelligence becomes a usable analytical product rather than only a research codebase.
 
 ---
 
@@ -668,9 +636,9 @@ Exchange Clients
     ↓
 Collectors
     ↓
-BaseMarketData Child Models
+Normalized Market Models
     ↓
-Database
+Repositories / Database
     ↓
 Synchronization
     ↓
@@ -678,17 +646,15 @@ Feature Engineering
     ↓
 Cross-Exchange Aggregation
     ↓
-Market State
-    ↓
 Scanner
     ↓
 Scoring
     ↓
+Backtesting
+    ↓
 Machine Learning
     ↓
 Signals
-    ↓
-Backtesting
     ↓
 API / Dashboard / Alerts
 ```
@@ -697,22 +663,22 @@ API / Dashboard / Alerts
 
 ## Development Rule
 
-Do not move to the next major layer until the previous layer is reliable.
-
-The development order should remain:
+Do not move to a major analytical layer until the underlying data layer is reliable.
 
 ```text
-Data quality
+Reliable Data
     before
 Features
     before
 Scanner
     before
+Backtesting
+    before
 Machine Learning
     before
 Signals
     before
-Product monetization
+Product
 ```
 
-A reliable dataset is more important than an advanced model built on incomplete or inconsistent market data.
+A reliable dataset is more valuable than an advanced model built on incomplete or inconsistent market data.

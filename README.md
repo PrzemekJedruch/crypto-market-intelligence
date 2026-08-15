@@ -92,9 +92,9 @@ Planned coverage includes:
 - Coinbase
 - Kraken
 
-The current development focus is **Binance USD-M Futures**.
+The first completed exchange integration is **Binance USD-M Futures**.
 
-Additional exchanges will be added after the first end-to-end data pipeline is stable.
+The next development focus is persistent historical storage and incremental synchronization. Additional exchanges will be added after the first end-to-end data pipeline is stable.
 
 ---
 
@@ -115,11 +115,11 @@ The project currently supports normalized models for:
 
 A common exchange interface has been created so future exchanges can expose market data in the same way.
 
-### 🚧 Binance Integration
+### ✅ Binance Integration
 
-Binance is the first working exchange integration.
+Binance is the first completed exchange integration.
 
-Currently implemented:
+Implemented:
 
 - public API connectivity,
 - candle downloads,
@@ -130,9 +130,12 @@ Currently implemented:
 - symbol normalization,
 - conversion of Binance responses into internal market-data models,
 - basic API error handling,
+- request limits and historical pagination,
 - automated tests for the current exchange layer.
 
-The next development step is request-limit and pagination handling so larger historical datasets can be downloaded safely and reliably.
+### ⏭️ Next: Historical Storage
+
+The next milestone is to persist normalized market data in PostgreSQL and then synchronize only data that is missing from the local dataset.
 
 ---
 
@@ -263,8 +266,8 @@ Development is planned in stages:
 ```text
 1. Core market models                 ✅
 2. Common exchange interface          ✅
-3. Binance integration                🚧
-4. Historical storage
+3. Binance integration                ✅
+4. Historical storage                 ⏭️
 5. Incremental synchronization
 6. Data-quality validation
 7. Additional exchanges
