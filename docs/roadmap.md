@@ -7,7 +7,7 @@
 | 1. Core Data Models | ✅ DONE | 100% |
 | 2. Exchange Interface | ✅ DONE | 100% |
 | 3. Binance Integration | ✅ DONE | 100% |
-| 4. Database Layer | 🟡 IN PROGRESS | 15% |
+| 4. Database Layer | 🟡 IN PROGRESS | 25% |
 | 5. Historical Synchronization | ⬜ TODO | 0% |
 | 6. Data Quality | ⬜ TODO | 0% |
 | 7. Bybit Integration | ⬜ TODO | 0% |
@@ -45,8 +45,8 @@
 
 ### Next Tasks
 
-- [ ] Configure PostgreSQL
-- [ ] Create the database connection layer
+- [x] Configure PostgreSQL
+- [x] Create the database connection layer
 - [ ] Define the initial market-data tables
 - [ ] Add unique constraints
 - [ ] Create repositories
@@ -193,7 +193,7 @@ Store normalized market data persistently.
 
 - [x] Configure PostgreSQL
 - [x] Create database connection layer
-- [ ] Create candle table
+- [x] Create candle table
 - [ ] Create trade table
 - [ ] Create Open Interest table
 - [ ] Create funding-rate table
