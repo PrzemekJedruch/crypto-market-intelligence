@@ -7,7 +7,7 @@
 | 1. Core Data Models | ✅ DONE | 100% |
 | 2. Exchange Interface | ✅ DONE | 100% |
 | 3. Binance Integration | ✅ DONE | 100% |
-| 4. Database Layer | ⬜ TODO | 0% |
+| 4. Database Layer | 🟡 IN PROGRESS | 15% |
 | 5. Historical Synchronization | ⬜ TODO | 0% |
 | 6. Data Quality | ⬜ TODO | 0% |
 | 7. Bybit Integration | ⬜ TODO | 0% |
@@ -183,7 +183,7 @@ Python can retrieve complete requested ranges of normalized BTCUSDT market data 
 
 ## Phase 4 — Database Layer
 
-**Status:** ⬜ TODO
+**Status:** 🟡 IN PROGRESS
 
 ### Goal
 
@@ -191,8 +191,8 @@ Store normalized market data persistently.
 
 ### Planned Tasks
 
-- [ ] Configure PostgreSQL
-- [ ] Create database connection layer
+- [x] Configure PostgreSQL
+- [x] Create database connection layer
 - [ ] Create candle table
 - [ ] Create trade table
 - [ ] Create Open Interest table
