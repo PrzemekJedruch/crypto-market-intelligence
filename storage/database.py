@@ -42,3 +42,30 @@ def create_candles_table() -> None:
     with get_connection() as connection:
         with connection.cursor() as cursor:
             cursor.execute(query)
+
+
+def create_trades_table() -> None:
+    """Create the trades table if it does not already exist."""
+    query = """
+        CREATE TABLE IF NOT EXISTS trades (
+            exchange VARCHAR(20) NOT NULL,
+            market_type VARCHAR(20) NOT NULL,
+            symbol VARCHAR(30) NOT NULL,
+            trade_id BIGINT NOT NULL,
+            timestamp TIMESTAMPTZ NOT NULL,
+            price DOUBLE PRECISION NOT NULL,
+            quantity DOUBLE PRECISION NOT NULL,
+            quote_value DOUBLE PRECISION NOT NULL,
+            side VARCHAR(10) NOT NULL,
+            PRIMARY KEY (
+                exchange,
+                market_type,
+                symbol,
+                trade_id
+            )
+        );
+    """
+
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(query)
