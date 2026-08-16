@@ -69,3 +69,27 @@ def create_trades_table() -> None:
     with get_connection() as connection:
         with connection.cursor() as cursor:
             cursor.execute(query)
+
+
+def create_open_interest_table() -> None:
+    """Create the open_interest table if it does not already exist."""
+    query = """
+        CREATE TABLE IF NOT EXISTS open_interest (
+            exchange VARCHAR(20) NOT NULL,
+            market_type VARCHAR(20) NOT NULL,
+            symbol VARCHAR(30) NOT NULL,
+            timestamp TIMESTAMPTZ NOT NULL,
+            open_interest DOUBLE PRECISION NOT NULL,
+            open_interest_usd DOUBLE PRECISION NOT NULL,
+            PRIMARY KEY (
+                exchange,
+                market_type,
+                symbol,
+                timestamp
+            )
+        );
+    """
+
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(query)

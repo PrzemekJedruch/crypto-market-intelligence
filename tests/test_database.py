@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 
 from storage.database import (
     create_candles_table,
+    create_open_interest_table,
     create_trades_table,
     get_connection,
 )
@@ -77,4 +78,28 @@ def test_create_trades_table_executes_create_table_query():
     assert "trade_id BIGINT NOT NULL" in executed_query
     assert "TIMESTAMPTZ" in executed_query
     assert "DOUBLE PRECISION" in executed_query
+    assert "PRIMARY KEY" in executed_query
+
+
+def test_create_open_interest_table_executes_create_table_query():
+    """Test that create_open_interest_table executes the Open Interest table SQL."""
+    mock_cursor = MagicMock()
+    mock_connection = MagicMock()
+
+    mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
+
+    with patch(
+        "storage.database.get_connection",
+        return_value=mock_connection,
+    ):
+        mock_connection.__enter__.return_value = mock_connection
+
+        create_open_interest_table()
+
+    executed_query = mock_cursor.execute.call_args.args[0]
+
+    assert "CREATE TABLE IF NOT EXISTS open_interest" in executed_query
+    assert "open_interest DOUBLE PRECISION NOT NULL" in executed_query
+    assert "open_interest_usd DOUBLE PRECISION NOT NULL" in executed_query
+    assert "TIMESTAMPTZ" in executed_query
     assert "PRIMARY KEY" in executed_query
